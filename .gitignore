@@ -1,0 +1,13 @@
+.DS_Store
+
+build
+node_modules
+
+*.log
+
+# solidity-coverage
+scTopics
+allFiredEvents
+coverage
+coverage.json
+coverageEnv

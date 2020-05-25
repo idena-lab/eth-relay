@@ -1,0 +1,24 @@
+{
+  "name": "eth-relay",
+  "version": "1.0.0",
+  "description": "Idena Ethereum Relay",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "idena",
+    "eth",
+    "relay",
+    "solidy",
+    "contract"
+  ],
+  "author": "henryfour",
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.0.1"
+  }
+}
