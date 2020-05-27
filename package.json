@@ -8,7 +8,7 @@
   },
   "scripts": {
     "compile": "truffle compile",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "truffle test"
   },
   "keywords": [
     "idena",
@@ -21,5 +21,12 @@
   "license": "MIT",
   "dependencies": {
     "@openzeppelin/contracts": "^3.0.1"
+  },
+  "devDependencies": {
+    "bn-chai": "^1.0.1",
+    "bn.js": "^5.1.2",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "lodash": "^4.17.15"
   }
 }

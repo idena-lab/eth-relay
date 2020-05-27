@@ -54,16 +54,18 @@ contract IdenaWorldState is Ownable {
 
         _initialized = true;
         _epoch = epoch;
-        uint256 state;
         address addr;
         uint256[2] memory pubkey;
+        uint32 birth;
+        uint8 state;
         for (uint256 i = 0; i < identities.length; i++) {
             addr = identities[i];
             pubkey = pubkeys[i];
-            state = states[i];
+            state = uint8(states[i]);
+            birth = uint32(states[i]>>8);
             require(state > 0, "Invalid identity state.");
             require(_states[addr].state == 0, "Duplicated identity");
-            _states[addr] = IdState(pubkey[0], pubkey[1], uint32(state>>8), uint8(state));
+            _states[addr] = IdState(pubkey[0], pubkey[1], birth, state);
             _identities.push(addr);
         }
         _population = _identities.length;
@@ -113,7 +115,7 @@ contract IdenaWorldState is Ownable {
         return result;
     }
 
-    function State(address identity) public view returns (IdState memory) {
+    function stateOf(address identity) public view returns (IdState memory) {
         return _states[identity];
     }
 }
