@@ -8,13 +8,16 @@ contract IdenaWorldState is Ownable {
     uint256 private _epoch;
 
     struct IdState {
+        uint256 pubX;
+        uint256 pubY;
         // last birth epoch
         uint32 birth;
         // 1 for Newbie, Verified, Human
-        // 0 for others(Unkown, Killed, Suspended, Candidate)
-        uint16 state;
+        // 0 for others(Unknown, Killed, Suspended, Candidate)
+        uint8 state;
     }
-    // Identities of latest epoch, the array size grow only, size is controlled by _populcation
+
+    // Identities of latest epoch, the array size only grows, size is controlled by _populcation
     address[] private _identities;
     uint256 _population;
     // identity states
@@ -29,14 +32,21 @@ contract IdenaWorldState is Ownable {
     /**
      * @dev Initialize `epoch` and identities' states
      *
+     * each uint256 of `states` is combination of birth(uint32) and state(uint8)
+     *
      * Emits a {NewEpoch} event.
      */
     function init(
         uint256 epoch,
         address[] memory identities,
+        uint256[2][] memory pubkeys,
         uint256[] memory states
     ) public onlyOwner {
         require(!_initialized, "Initialization can only be called once.");
+        require(
+            identities.length == pubkeys.length,
+            "Array length not match for identities and pubkeys."
+        );
         require(
             identities.length == states.length,
             "Array length not match for identities and states."
@@ -46,12 +56,14 @@ contract IdenaWorldState is Ownable {
         _epoch = epoch;
         uint256 state;
         address addr;
+        uint256[2] memory pubkey;
         for (uint256 i = 0; i < identities.length; i++) {
             addr = identities[i];
+            pubkey = pubkeys[i];
             state = states[i];
             require(state > 0, "Invalid identity state.");
             require(_states[addr].state == 0, "Duplicated identity");
-            _states[addr] = IdState(uint32(epoch), uint16(state));
+            _states[addr] = IdState(pubkey[0], pubkey[1], uint32(state>>8), uint8(state));
             _identities.push(addr);
         }
         _population = _identities.length;
