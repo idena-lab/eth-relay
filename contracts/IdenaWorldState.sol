@@ -3,10 +3,12 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./Pairing.sol";
 
 
 contract IdenaWorldState is Ownable {
     using SafeMath for uint256;
+    using Pairing for *;
 
     struct IdState {
         uint256 pubX;
@@ -106,13 +108,13 @@ contract IdenaWorldState is Ownable {
         internal
         returns (uint256, uint256[2] memory)
     {
-        uint256 pop = _population;
-        require(signFlags.length == (pop + 7) / 8, "invalid remove flags");
+        uint256 oldPop = _population;
+        require(signFlags.length == (oldPop + 7) / 8, "invalid remove flags");
         uint8 sf;
         bool success;
         uint256 count;
         uint256[4] memory apk;
-        for (uint256 i = 0; i < pop; ) {
+        for (uint256 i = 0; i < oldPop; ) {
             sf = uint8(signFlags[i / 8]);
             for (uint256 j = i + 8; i < j; i++) {
                 if ((sf & 0x1) == 1) {
@@ -142,13 +144,13 @@ contract IdenaWorldState is Ownable {
         address[] memory identities,
         uint256[2][] memory pubkeys,
         bytes memory removeFlags
-    ) internal returns (bytes32) {
+    ) internal view returns (bytes32) {
         // todo: use better encoding?
         return
             keccak256(
                 abi.encode(
                     _root,
-                    keccak256(bytes32(epoch)),
+                    epoch,
                     keccak256(removeFlags),
                     identities,
                     pubkeys
@@ -156,13 +158,27 @@ contract IdenaWorldState is Ownable {
             );
     }
 
+    /**
+     * @dev check verify
+     * @return pairing check result
+     */
     function verify(
         uint256[2] memory apk,
         uint256 hm,
         uint256[4] memory signature
-    ) public pure returns (bool) {
-        //todo:
-        return true;
+    ) public view returns (bool) {
+        Pairing.G1Point[] memory p1 = new Pairing.G1Point[](2);
+        Pairing.G2Point[] memory p2 = new Pairing.G2Point[](2);
+        // hash to G1 (converted solution to avoid hashing to G2)
+        p1[0] = Pairing.G1Point(apk[0], apk[1]);
+        p1[0] = p1[0].scalarMult(hm);
+        p2[0] = Pairing.P2();
+        p1[1] = Pairing.P1();
+        p2[1] = Pairing.G2Point(
+            [signature[0], signature[1]],
+            [signature[2], signature[3]]
+        );
+        return Pairing.check(p1, p2);
     }
 
     function updateStates(
@@ -191,7 +207,7 @@ contract IdenaWorldState is Ownable {
         for (uint256 i = 0; i < oldPop; ) {
             rf = uint8(removeFlags[i / 8]);
             for (uint256 j = i + 8; i < j; i++) {
-                if ((rf & 0x1 == 1)) {
+                if ((rf & 0x1 != 1)) {
                     realRemoved++;
                     // clear removed identity's state
                     delete _states[_identities[j]];
@@ -215,13 +231,8 @@ contract IdenaWorldState is Ownable {
         }
         require(realRemoved == removeCount, "wrong remove count supplied");
 
-        for (uint256 i = 0; i < identities.length; i++) {
-            addr = identities[i];
-            pubkey = pubkeys[i];
-            require(_states[addr].pubX == 0, "duplicated identity");
-            _states[addr] = IdState(pubkey[0], pubkey[1]);
-            _identities.push(addr);
-        }
+        // todo: if (insertCount < identities.length) {
+        // todo: if movePushed > 0
 
         _population = newPop;
     }
