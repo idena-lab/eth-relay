@@ -18,25 +18,24 @@ contract("IdenaWorldState", (accounts) => {
     });
   });
 
-  describe("call init()", async () => {
+  describe("initialize", async () => {
     const epoch = new BN(40);
     const identities = [accounts[1], accounts[2]];
     const pubkeys = [
       [new BN(h.randHex(64), 16), new BN(h.randHex(64), 16)],
       [new BN(h.randHex(64), 16), new BN(h.randHex(64), 16)],
     ];
-    const states = [new BN((4 << 8) + 1), new BN((10 << 8) + 1)];
     it("init should failed by non-owner", async () => {
       const nonOwner = accounts[3];
       await this.idenaWorld
-        .init(epoch, identities, pubkeys, states, {
+        .init(epoch, identities, pubkeys, {
           from: nonOwner,
         })
         .should.be.rejectedWith(h.EVMRevert);
     });
     it("init should succ by owner", async () => {
       const owner = deployer;
-      await this.idenaWorld.init(epoch, identities, pubkeys, states, {
+      await this.idenaWorld.init(epoch, identities, pubkeys, {
         from: owner,
       }).should.be.fulfilled;
     });
@@ -53,8 +52,7 @@ contract("IdenaWorldState", (accounts) => {
         // console.log(cState);
         cState.pubX.should.eq.BN(pubkeys[i][0]);
         cState.pubY.should.eq.BN(pubkeys[i][1]);
-        cState.birth.should.eq.BN(states[i].shrn(8));
-        cState.state.should.eq.BN(states[i].mod(new BN(1<<8)));
+        (await this.idenaWorld.isIdentity(identities[i])).should.equal(true);
       }
     });
   });
