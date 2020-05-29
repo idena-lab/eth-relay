@@ -94,11 +94,8 @@ contract IdenaWorldState is Ownable {
 
         (uint256 count, Pairing.G1Point memory apk1) = buildAPK1(signFlags);
         // verify signature
-        require(
-            count > _identities.length.mul(2).div(3),
-            "signature count less than 2/3"
-        );
-        bytes32 m = prepareMsg(epoch, identities, pubkeys, removeFlags);
+        require(count > _identities.length.mul(2).div(3), "signature count less than 2/3");
+        bytes memory m = prepareMsg(epoch, identities, pubkeys, removeFlags);
         verify(apk1, apk2, m, signature);
 
         // update _identities, _states, _population
@@ -153,9 +150,8 @@ contract IdenaWorldState is Ownable {
         address[] memory identities,
         uint256[2][] memory pubkeys,
         bytes memory removeFlags
-    ) internal view returns (bytes32) {
-        // todo: use better encoding?
-        return keccak256(abi.encode(_root, epoch, keccak256(removeFlags), identities, pubkeys));
+    ) internal view returns (bytes memory) {
+        return abi.encode(_root, epoch, keccak256(removeFlags), identities, pubkeys);
     }
 
     /**
@@ -164,7 +160,7 @@ contract IdenaWorldState is Ownable {
     function verify(
         Pairing.G1Point memory apk1,
         uint256[4] memory apk2,
-        bytes32 m,
+        bytes memory m,
         uint256[2] memory signature
     ) public view {
         Pairing.G2Point memory apk2Point = Pairing.G2Point(

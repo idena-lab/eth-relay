@@ -91,45 +91,42 @@ library Pairing {
      * @return the negation of point p
      */
     function negate(G1Point memory p) internal pure returns (G1Point memory) {
-        uint256 FP = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+        uint256 P = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
         if (p.x == 0 && p.y == 0) {
             return G1Point(0, 0);
         }
-        return G1Point(p.x, FP - (p.y % FP));
+        return G1Point(p.x, P - (p.y % P));
     }
 
     /**
      * @dev Hash data to G1 point
      */
-    function hashToG1(bytes32 m) internal view returns (G1Point memory) {
-        uint256 FP = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
-        uint256 FPminus = 21888242871839275222246405745257275088696311157297823662689037894645226208582;
-        uint256 FPplus = 21888242871839275222246405745257275088696311157297823662689037894645226208584;
+    function hashToG1(bytes memory m) internal view returns (G1Point memory) {
+        uint256 P = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+        uint256 Pminus = 21888242871839275222246405745257275088696311157297823662689037894645226208582;
+        uint256 Pplus = 21888242871839275222246405745257275088696311157297823662689037894645226208584;
         G1Point memory p;
-        uint8 c = 0;
+        bytes memory bf = abi.encodePacked(uint8(0), keccak256(m));
         while (true) {
-            uint256 hx = uint256(keccak256(abi.encodePacked(c, m))) % FP;
-            uint256 px = (modExp(hx, 3, FP) + 3);
-            if (modExp(px, FPminus / 2, FP) == 1) {
-                uint256 py = modExp(px, FPplus / 4, FP);
-                if (uint256(keccak256(abi.encodePacked(m, uint8(255)))) % 2 == 0) {
+            uint256 hx = uint256(keccak256(bf)) % P;
+            uint256 px = modExp(hx, 3, P) + 3;
+            if (modExp(px, Pminus / 2, P) == 1) {
+                uint256 py = modExp(px, Pplus / 4, P);
+                bf[0] = byte(uint8(255));
+                if (uint256(keccak256(bf)) % 2 == 0) {
                     p = G1Point(hx, py);
                 } else {
-                    p = G1Point(hx, FP - py);
+                    p = G1Point(hx, P - py);
                 }
                 break;
             }
-            c++;
+            bf[0] = byte(uint8(bf[0]) + 1);
         }
         return p;
     }
 
-    function modExp(
-        uint256 base,
-        uint256 exponent,
-        uint256 modulus
-    ) internal view returns (uint256) {
+    function modExp(uint256 base, uint256 exponent, uint256 modulus) internal view returns (uint256) {
         uint256[6] memory input = [32, 32, 32, base, exponent, modulus];
         uint256[1] memory result;
         bool success;

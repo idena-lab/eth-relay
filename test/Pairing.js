@@ -23,6 +23,16 @@ contract("Pairing", (accounts) => {
     }
   })
 
+  describe.only("> hashToG1", async () => {
+    for (const [i, d] of data.hashToG1.valid.entries()) {
+      it(`check pairing (${i + 1})`, async () => {
+        const ret = await pairing.hashToG1.call(d.input)
+        ret.x.should.eq.BN(new BN(d.output.x.substr(2), 16))
+        ret.y.should.eq.BN(new BN(d.output.y.substr(2), 16))
+      })
+    }
+  })
+
   describe("> pairing", async () => {
     for (const [i, d] of data.pairing.valid.entries()) {
       it(`check pairing (${i + 1})`, async () => {
