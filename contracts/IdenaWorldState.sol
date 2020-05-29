@@ -1,4 +1,4 @@
-pragma solidity >=0.4.25 <0.7.0;
+pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -84,6 +84,7 @@ contract IdenaWorldState is Ownable {
         uint256 removeCount,
         uint256[4] memory signature
     ) public {
+        require(_initialized, "contract has not initialized.");
         require(_epoch <= epoch, "epoch can not decrease");
 
         (uint256 count, uint256[2] memory apk) = buildAPK(signFlags);
@@ -106,6 +107,7 @@ contract IdenaWorldState is Ownable {
 
     function buildAPK(bytes memory signFlags)
         internal
+        view
         returns (uint256, uint256[2] memory)
     {
         uint256 oldPop = _population;
@@ -128,7 +130,7 @@ contract IdenaWorldState is Ownable {
                         apk[2] = state.pubX;
                         apk[3] = state.pubY;
                         assembly {
-                            success := call(not(0), 0x06, 0, apk, 128, apk, 64)
+                            success := staticcall(not(0), 0x06, apk, 128, apk, 64)
                         }
                         require(success, "bn256 addition failed");
                     }
@@ -159,7 +161,11 @@ contract IdenaWorldState is Ownable {
     }
 
     /**
-     * @dev check verify
+     * @dev Verify with pairing
+     *
+     *   check: e(apk, hm*g2) ?== e(g1, signature)
+     *      --> e(hm*apk, g2) ?== e(g1, signature)
+     *
      * @return pairing check result
      */
     function verify(

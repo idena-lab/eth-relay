@@ -1,4 +1,4 @@
-pragma solidity >=0.5.3 <0.7.0;
+pragma solidity 0.6.8;
 
 
 // This file is MIT Licensed.
@@ -54,7 +54,7 @@ library Pairing {
     {
         uint256[3] memory input;
         input[0] = p.x;
-        input[1] = p.x;
+        input[1] = p.y;
         input[2] = s;
         bool success;
         G1Point memory result;
@@ -91,7 +91,6 @@ library Pairing {
             input[i * 6 + 4] = p2[i].y[0];
             input[i * 6 + 5] = p2[i].y[1];
         }
-        uint256[1] memory out;
         uint256[1] memory result;
         bool success;
         assembly {
