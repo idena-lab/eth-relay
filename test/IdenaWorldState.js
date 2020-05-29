@@ -18,7 +18,11 @@ contract("IdenaWorldState", (accounts) => {
     });
   });
 
-  describe("initialize", async () => {
+  describe("> verify", async () => {
+    // todo
+  });
+
+  describe("> initialize", async () => {
     const epoch = new BN(40);
     const identities = [accounts[1], accounts[2]];
     const pubkeys = [
@@ -55,5 +59,9 @@ contract("IdenaWorldState", (accounts) => {
         (await this.idenaWorld.isIdentity(identities[i])).should.equal(true);
       }
     });
+  });
+
+  describe("> update", async () => {
+    // todo
   });
 });
