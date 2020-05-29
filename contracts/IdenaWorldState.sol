@@ -35,7 +35,7 @@ contract IdenaWorldState is Ownable {
     /**
      * @dev Initialize `epoch` and identities with pubkeys
      *
-     * Emits a {Updated} event.
+     * Emits an {Updated} event.
      */
     function init(
         uint256 epoch,
@@ -70,31 +70,36 @@ contract IdenaWorldState is Ownable {
      * @dev Update identities
      *
      * `identities` are the new identities.
-     * `removeflags` are the indexes of identities to remove in previous state world.
-     * `signflags` are the indexes of singers in previous state world.
+     * `pubkeys` are the new pubkeys to add.
+     * `removeFlags` are the indexes of identities to remove in previous state world.
+     * `removeCount` is total count of pubkeys to remove in previous state world.
+     * `signFlags` are the indexes of singers in previous state world.
+     * `signature` is the signature of this update.
+     * `apk2` is the aggregated G2 pubkeys.
      *
-     * Emits a {Updated} event.
+     * Emits an {Updated} event.
      */
     function update(
         uint256 epoch,
         address[] memory identities,
         uint256[2][] memory pubkeys,
         bytes memory removeFlags,
-        bytes memory signFlags,
         uint256 removeCount,
-        uint256[4] memory signature
+        bytes memory signFlags,
+        uint256[2] memory signature,
+        uint256[4] memory apk2
     ) public {
         require(_initialized, "contract has not initialized.");
         require(_epoch <= epoch, "epoch can not decrease");
 
-        (uint256 count, uint256[2] memory apk) = buildAPK(signFlags);
+        (uint256 count, Pairing.G1Point memory apk1) = buildAPK1(signFlags);
         // verify signature
         require(
             count > _identities.length.mul(2).div(3),
             "signature count less than 2/3"
         );
-        bytes memory m = prepareMsg(epoch, identities, pubkeys, removeFlags);
-        require(verify(apk, m, signature), "invalid signature");
+        bytes32 m = prepareMsg(epoch, identities, pubkeys, removeFlags);
+        verify(apk1, apk2, m, signature);
 
         // update _identities, _states, _population
         updateStates(identities, pubkeys, removeFlags, removeCount);
@@ -105,97 +110,91 @@ contract IdenaWorldState is Ownable {
         emit Updated(_epoch, _population);
     }
 
-    function buildAPK(bytes memory signFlags)
-        internal
-        view
-        returns (uint256, uint256[2] memory)
+    /**
+     * @dev aggregate public keys in G1
+     */
+    function buildAPK1(bytes memory signFlags)
+    internal
+    view
+    returns (uint256, Pairing.G1Point memory)
     {
         uint256 oldPop = _population;
         require(signFlags.length == (oldPop + 7) / 8, "invalid remove flags");
-        uint8 sf;
         bool success;
         uint256 count;
         uint256[4] memory apk;
-        for (uint256 i = 0; i < oldPop; ) {
-            sf = uint8(signFlags[i / 8]);
-            for (uint256 j = i + 8; i < j; i++) {
-                if ((sf & 0x1) == 1) {
-                    count++;
-                    // aggregate signers
-                    IdState storage state = _states[_identities[j]];
-                    if (apk[0] == 0) {
-                        apk[0] = state.pubX;
-                        apk[1] = state.pubY;
-                    } else {
-                        apk[2] = state.pubX;
-                        apk[3] = state.pubY;
-                        assembly {
-                            success := staticcall(
-                                not(0),
-                                0x06,
-                                apk,
-                                128,
-                                apk,
-                                64
-                            )
-                        }
-                        require(success, "bn256 addition failed");
+        for (uint256 i = 0; i < oldPop; i++) {
+            if (uint8(signFlags[i / 8]) & uint8(1 << (i % 8)) != 0) {
+                count++;
+                // aggregate pubkeys
+                IdState storage state = _states[_identities[i]];
+                if (apk[0] == 0) {
+                    apk[0] = state.pubX;
+                    apk[1] = state.pubY;
+                } else {
+                    apk[2] = state.pubX;
+                    apk[3] = state.pubY;
+                    // addPoints directly
+                    assembly {
+                        success := staticcall(not(0), 0x06, apk, 128, apk, 64)
                     }
+                    require(success, "bn256 addition failed");
                 }
-                sf >>= 1;
             }
         }
-        return (count, [apk[0], apk[1]]);
+        return (count, Pairing.G1Point(apk[0], apk[1]));
     }
 
+    /**
+     * @return the message to sign
+     */
     function prepareMsg(
         uint256 epoch,
         address[] memory identities,
         uint256[2][] memory pubkeys,
         bytes memory removeFlags
-    ) internal view returns (bytes memory) {
+    ) internal view returns (bytes32) {
         // todo: use better encoding?
-        return
-            abi.encode(
-                _root,
-                epoch,
-                keccak256(removeFlags),
-                identities,
-                pubkeys
-            );
+        return keccak256(abi.encode(_root, epoch, keccak256(removeFlags), identities, pubkeys));
     }
 
     /**
-     * @dev Verify with pairing
-     *
-     *   check: e(apk, H(m)) ?== e(g1, signature)
-     *      --> e(apk, hash(m)*g2) ?== e(g1, signature)
-     *      --> e(hash(m)*apk, g2) ?== e(g1, signature)
-     *
-     *   todo: confirm whether this "hash to curve method" (scalarMult) is safe.
-     *
-     * @return pairing check result
+     * @dev Verify pairings
      */
     function verify(
-        uint256[2] memory apk,
-        bytes memory m,
-        uint256[4] memory signature
-    ) public view returns (bool) {
+        Pairing.G1Point memory apk1,
+        uint256[4] memory apk2,
+        bytes32 m,
+        uint256[2] memory signature
+    ) public view {
+        Pairing.G2Point memory apk2Point = Pairing.G2Point(
+            [apk2[0], apk2[1]],
+            [apk2[2], apk2[3]]
+        );
         Pairing.G1Point[] memory p1 = new Pairing.G1Point[](2);
         Pairing.G2Point[] memory p2 = new Pairing.G2Point[](2);
-        // hash to G1 (converted solution to avoid hashing to G2)
-        p1[0] = Pairing.G1Point(apk[0], apk[1]);
-        // p2[0] = hashToG2(m)
-        p1[0] = p1[0].scalarMult(uint256(keccak256(m)));
-        p2[0] = Pairing.P2();
-        p1[1] = Pairing.P1();
-        p2[1] = Pairing.G2Point(
-            [signature[0], signature[1]],
-            [signature[2], signature[3]]
+        // check apk2: e(apk1, g2) == e(g1, apk2)
+        p1[0] = apk1;
+        p2[0] = Pairing.g2();
+        p1[1] = Pairing.g1();
+        p2[1] = apk2Point;
+        require(Pairing.check(p1, p2), "invalid apk2");
+
+        // check signature: e(S, g2) == e(H(m), apk2)
+        Pairing.G1Point memory sigPoint = Pairing.G1Point(
+            signature[0],
+            signature[1]
         );
-        return Pairing.check(p1, p2);
+        p1[0] = sigPoint;
+        p2[0] = Pairing.g2();
+        p1[1] = Pairing.hashToG1(m);
+        p2[1] = apk2Point;
+        require(Pairing.check(p1, p2), "invalid signature");
     }
 
+    /**
+     * @dev Update the world state of idena.
+     */
     function updateStates(
         address[] memory identities,
         uint256[2][] memory pubkeys,
@@ -219,7 +218,7 @@ contract IdenaWorldState is Ownable {
         uint256 realRemoved = 0;
         address addr;
         uint256[2] memory pubkey;
-        for (uint256 i = 0; i < oldPop; ) {
+        for (uint256 i = 0; i < oldPop;) {
             rf = uint8(removeFlags[i / 8]);
             for (uint256 j = i + 8; i < j; i++) {
                 if ((rf & 0x1 != 1)) {

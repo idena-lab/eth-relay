@@ -23,34 +23,52 @@ library Pairing {
     /**
      * @return the generator of G1
      */
-    function P1() internal pure returns (G1Point memory) {
+    function g1() internal pure returns (G1Point memory) {
         return G1Point(1, 2);
     }
 
     /**
      * @return the generator of G2
      */
-    function P2() internal pure returns (G2Point memory) {
+    function g2() internal pure returns (G2Point memory) {
         return
-            G2Point(
-                [
-                    11559732032986387107991004021392285783925812861821192530917403151452391805634,
-                    10857046999023057135944570762232829481370756359578518086990519993285655852781
-                ],
-                [
-                    4082367875863433681332203403145435568316851327593401208105741076214120093531,
-                    8495653923123431417604973247489272438418190587263600148770280649306958101930
-                ]
-            );
+        G2Point(
+            [
+            11559732032986387107991004021392285783925812861821192530917403151452391805634,
+            10857046999023057135944570762232829481370756359578518086990519993285655852781
+            ],
+            [
+            4082367875863433681332203403145435568316851327593401208105741076214120093531,
+            8495653923123431417604973247489272438418190587263600148770280649306958101930
+            ]
+        );
     }
 
     /**
-     * @return the product of a point on G1 and a scalar, i.e.
+     * @return the sum of two points on G1
+     */
+    function addPoints(G1Point memory a, G1Point memory b)
+    internal
+    view
+    returns (G1Point memory)
+    {
+        uint256[4] memory input = [a.x, a.y, b.x, b.y];
+        uint256[2] memory result;
+        bool success;
+        assembly {
+            success := staticcall(not(0), 0x06, input, 0x80, result, 0x40)
+        }
+        require(success, "elliptic curve addition failed");
+        return G1Point(result[0], result[1]);
+    }
+
+    /**
+     * @return the product of a point on G1 and a scalar
      */
     function scalarMult(G1Point memory p, uint256 s)
-        internal
-        view
-        returns (G1Point memory)
+    internal
+    view
+    returns (G1Point memory)
     {
         uint256[3] memory input;
         input[0] = p.x;
@@ -59,14 +77,67 @@ library Pairing {
         bool success;
         G1Point memory result;
         assembly {
-            // 0x07     id of precompiled bn256ScalarMul contract
-            // 0        since we have an array of fixed length, our input starts in 0
-            // 96       size of call parameters, i.e. 96 bytes total (256 bit for x, 256 bit for y, 256 bit for scalar)
-            // 64       size of call return value, i.e. 64 bytes / 512 bit for a BN256 curve point
+        // 0x07     id of precompiled bn256ScalarMul contract
+        // 0        since we have an array of fixed length, our input starts in 0
+        // 96       size of call parameters, i.e. 96 bytes total (256 bit for x, 256 bit for y, 256 bit for scalar)
+        // 64       size of call return value, i.e. 64 bytes / 512 bit for a BN256 curve point
             success := staticcall(not(0), 0x07, input, 96, result, 64)
         }
         require(success, "elliptic curve multiplication failed");
         return result;
+    }
+
+    /**
+     * @return the negation of point p
+     */
+    function negate(G1Point memory p) internal pure returns (G1Point memory) {
+        uint256 FP = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+
+        if (p.x == 0 && p.y == 0) {
+            return G1Point(0, 0);
+        }
+        return G1Point(p.x, FP - (p.y % FP));
+    }
+
+    /**
+     * @dev Hash data to G1 point
+     */
+    function hashToG1(bytes32 m) internal view returns (G1Point memory) {
+        uint256 FP = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+        uint256 FPminus = 21888242871839275222246405745257275088696311157297823662689037894645226208582;
+        uint256 FPplus = 21888242871839275222246405745257275088696311157297823662689037894645226208584;
+        G1Point memory p;
+        uint8 c = 0;
+        while (true) {
+            uint256 hx = uint256(keccak256(abi.encodePacked(c, m))) % FP;
+            uint256 px = (modExp(hx, 3, FP) + 3);
+            if (modExp(px, FPminus / 2, FP) == 1) {
+                uint256 py = modExp(px, FPplus / 4, FP);
+                if (uint256(keccak256(abi.encodePacked(m, uint8(255)))) % 2 == 0) {
+                    p = G1Point(hx, py);
+                } else {
+                    p = G1Point(hx, FP - py);
+                }
+                break;
+            }
+            c++;
+        }
+        return p;
+    }
+
+    function modExp(
+        uint256 base,
+        uint256 exponent,
+        uint256 modulus
+    ) internal view returns (uint256) {
+        uint256[6] memory input = [32, 32, 32, base, exponent, modulus];
+        uint256[1] memory result;
+        bool success;
+        assembly {
+            success := staticcall(not(0), 0x05, input, 0xc0, result, 0x20)
+        }
+        require(success, "call modExp failed");
+        return result[0];
     }
 
     /**
@@ -75,9 +146,9 @@ library Pairing {
      * @return the result of computing the pairing check
      */
     function check(G1Point[] memory p1, G2Point[] memory p2)
-        internal
-        view
-        returns (bool)
+    internal
+    view
+    returns (bool)
     {
         require(p1.length == p2.length, "EC pairing p1 length != p2 length");
         uint256 elements = p1.length;
@@ -94,18 +165,11 @@ library Pairing {
         uint256[1] memory result;
         bool success;
         assembly {
-            // 0x08     id of precompiled bn256Pairing contract (checking the elliptic curve pairings)
-            // add(input, 0x20) since we have an unbounded array, the first 256 bits refer to its length
-            // mul(inputSize, 0x20) size of call parameters, each word is 0x20 bytes
-            // 32       size of result (one 32 byte boolean!)
-            success := staticcall(
-                not(0),
-                0x08,
-                add(input, 0x20),
-                mul(inputSize, 0x20),
-                result,
-                32
-            )
+        // 0x08     id of precompiled bn256Pairing contract (checking the elliptic curve pairings)
+        // add(input, 0x20) since we have an unbounded array, the first 256 bits refer to its length
+        // mul(inputSize, 0x20) size of call parameters, each word is 0x20 bytes
+        // 32       size of result (one 32 byte boolean!)
+            success := staticcall(not(0), 0x08, add(input, 0x20), mul(inputSize, 0x20), result, 32)
         }
         require(success, "elliptic curve pairing failed");
         return result[0] == 1;
