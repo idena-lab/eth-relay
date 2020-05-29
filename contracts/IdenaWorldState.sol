@@ -93,8 +93,8 @@ contract IdenaWorldState is Ownable {
             count > _identities.length.mul(2).div(3),
             "signature count less than 2/3"
         );
-        bytes32 hm = prepareHash(epoch, identities, pubkeys, removeFlags);
-        require(verify(apk, uint256(hm), signature), "invalid signature");
+        bytes memory m = prepareMsg(epoch, identities, pubkeys, removeFlags);
+        require(verify(apk, m, signature), "invalid signature");
 
         // update _identities, _states, _population
         updateStates(identities, pubkeys, removeFlags, removeCount);
@@ -130,7 +130,14 @@ contract IdenaWorldState is Ownable {
                         apk[2] = state.pubX;
                         apk[3] = state.pubY;
                         assembly {
-                            success := staticcall(not(0), 0x06, apk, 128, apk, 64)
+                            success := staticcall(
+                                not(0),
+                                0x06,
+                                apk,
+                                128,
+                                apk,
+                                64
+                            )
                         }
                         require(success, "bn256 addition failed");
                     }
@@ -141,43 +148,45 @@ contract IdenaWorldState is Ownable {
         return (count, [apk[0], apk[1]]);
     }
 
-    function prepareHash(
+    function prepareMsg(
         uint256 epoch,
         address[] memory identities,
         uint256[2][] memory pubkeys,
         bytes memory removeFlags
-    ) internal view returns (bytes32) {
+    ) internal view returns (bytes memory) {
         // todo: use better encoding?
         return
-            keccak256(
-                abi.encode(
-                    _root,
-                    epoch,
-                    keccak256(removeFlags),
-                    identities,
-                    pubkeys
-                )
+            abi.encode(
+                _root,
+                epoch,
+                keccak256(removeFlags),
+                identities,
+                pubkeys
             );
     }
 
     /**
      * @dev Verify with pairing
      *
-     *   check: e(apk, hm*g2) ?== e(g1, signature)
-     *      --> e(hm*apk, g2) ?== e(g1, signature)
+     *   check: e(apk, H(m)) ?== e(g1, signature)
+     *      --> e(apk, hash(m)*g2) ?== e(g1, signature)
+     *      --> e(hash(m)*apk, g2) ?== e(g1, signature)
+     *
+     *   todo: confirm whether this "hash to curve method" (scalarMult) is safe.
      *
      * @return pairing check result
      */
     function verify(
         uint256[2] memory apk,
-        uint256 hm,
+        bytes memory m,
         uint256[4] memory signature
     ) public view returns (bool) {
         Pairing.G1Point[] memory p1 = new Pairing.G1Point[](2);
         Pairing.G2Point[] memory p2 = new Pairing.G2Point[](2);
         // hash to G1 (converted solution to avoid hashing to G2)
         p1[0] = Pairing.G1Point(apk[0], apk[1]);
-        p1[0] = p1[0].scalarMult(hm);
+        // p2[0] = hashToG2(m)
+        p1[0] = p1[0].scalarMult(uint256(keccak256(m)));
         p2[0] = Pairing.P2();
         p1[1] = Pairing.P1();
         p2[1] = Pairing.G2Point(
