@@ -23,9 +23,9 @@ contract("Pairing", (accounts) => {
     }
   })
 
-  describe.only("> hashToG1", async () => {
+  describe("> hashToG1", async () => {
     for (const [i, d] of data.hashToG1.valid.entries()) {
-      it(`check pairing (${i + 1})`, async () => {
+      it(`check hash (${i + 1})`, async () => {
         const ret = await pairing.hashToG1.call(d.input)
         ret.x.should.eq.BN(new BN(d.output.x.substr(2), 16))
         ret.y.should.eq.BN(new BN(d.output.y.substr(2), 16))
@@ -33,22 +33,12 @@ contract("Pairing", (accounts) => {
     }
   })
 
-  describe("> pairing", async () => {
+  describe.only("> pairing", async () => {
     for (const [i, d] of data.pairing.valid.entries()) {
       it(`check pairing (${i + 1})`, async () => {
-        const ret = await pairing.check.call([d.input.x1_g1,
-          d.input.y1_g1
-        ], [d.input.x1_re_g2,
-          d.input.x1_im_g2,
-          d.input.y1_re_g2,
-          d.input.y1_im_g2
-        ], [d.input.x2_g1,
-          d.input.y2_g1
-        ], [d.input.x2_re_g2,
-          d.input.x2_im_g2,
-          d.input.y2_re_g2,
-          d.input.y2_im_g2
-        ])
+        let pl = d.input.points
+        const ret = await pairing.check2.call(pl.slice(0, 2), pl.slice(2, 6), pl.slice(6, 8), pl.slice(8))
+        console.log(ret)
         ret.should.equal(d.output.success)
       })
     }

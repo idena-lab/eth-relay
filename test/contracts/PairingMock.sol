@@ -5,6 +5,7 @@ import "../../contracts/Pairing.sol";
 
 
 contract PairingMock {
+
     function scalarMult(uint256[2] memory p, uint256 s) public view returns (Pairing.G1Point memory) {
         return Pairing.scalarMult(Pairing.G1Point(p[0], p[1]), s);
     }
@@ -13,7 +14,7 @@ contract PairingMock {
         return Pairing.hashToG1(bytes(m));
     }
 
-    function check(
+    function check2(
         uint256[2] memory a1,
         uint256[4] memory a2,
         uint256[2] memory b1,

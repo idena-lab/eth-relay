@@ -155,7 +155,7 @@ contract IdenaWorldState is Ownable {
     }
 
     /**
-     * @dev Verify pairings
+     * @dev Verify
      */
     function verify(
         Pairing.G1Point memory apk1,

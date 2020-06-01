@@ -99,6 +99,69 @@ library Pairing {
         return G1Point(p.x, P - (p.y % P));
     }
 
+    function modExp(uint256 base, uint256 exponent, uint256 modulus) internal view returns (uint256) {
+        uint256[6] memory input = [32, 32, 32, base, exponent, modulus];
+        uint256[1] memory result;
+        bool success;
+        assembly {
+            success := staticcall(not(0), 0x05, input, 0xc0, result, 0x20)
+        }
+        require(success, "call modExp failed");
+        return result[0];
+    }
+
+    /**
+     * @dev Checks if e(p1[0], p2[0]) *  .... * e(p1[n], p2[n]) == 1
+     *
+     * @return the result of computing the pairing check
+     */
+    function check(G1Point[] memory p1, G2Point[] memory p2) internal view returns (bool) {
+        uint256 P = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+        require(p1.length == p2.length, "EC pairing p1 length != p2 length");
+        uint256 elements = p1.length;
+        uint256 inputSize = elements * 6;
+        uint256[] memory input = new uint256[](inputSize);
+        for (uint256 i = 0; i < elements; i++) {
+            input[i * 6 + 0] = p1[i].x;
+            input[i * 6 + 1] = p1[i].y;
+            input[i * 6 + 2] = p2[i].x[0];
+            input[i * 6 + 3] = p2[i].x[1];
+            input[i * 6 + 4] = p2[i].y[0];
+            input[i * 6 + 5] = p2[i].y[1];
+        }
+        // negative p1[0].y
+        input[1] = P - input[1] % P;
+        uint256[1] memory result;
+        bool success;
+        assembly {
+        // 0x08     id of precompiled bn256Pairing contract (checking the elliptic curve pairings)
+        // add(input, 0x20) since we have an unbounded array, the first 256 bits refer to its length
+        // mul(inputSize, 0x20) size of call parameters, each word is 0x20 bytes
+        // 0x20     size of result (one 32 byte boolean!)
+            success := staticcall(not(0), 0x08, add(input, 0x20), mul(inputSize, 0x20), result, 0x20)
+        }
+        // require(success, "elliptic curve pairing failed");
+        return result[0] == 1;
+    }
+
+    /**
+     * @dev Convenience method for a pairing check for two pairs.
+     */
+    function check2(
+        G1Point memory a1,
+        G2Point memory a2,
+        G1Point memory b1,
+        G2Point memory b2
+    ) internal view returns (bool) {
+        G1Point[] memory p1 = new G1Point[](2);
+        G2Point[] memory p2 = new G2Point[](2);
+        p1[0] = a1;
+        p1[1] = b1;
+        p2[0] = a2;
+        p2[1] = b2;
+        return check(p1, p2);
+    }
+
     /**
      * @dev Hash data to G1 point
      */
@@ -124,91 +187,5 @@ library Pairing {
             bf[0] = byte(uint8(bf[0]) + 1);
         }
         return p;
-    }
-
-    function modExp(uint256 base, uint256 exponent, uint256 modulus) internal view returns (uint256) {
-        uint256[6] memory input = [32, 32, 32, base, exponent, modulus];
-        uint256[1] memory result;
-        bool success;
-        assembly {
-            success := staticcall(not(0), 0x05, input, 0xc0, result, 0x20)
-        }
-        require(success, "call modExp failed");
-        return result[0];
-    }
-
-    /**
-     * @dev Checks if e(p1[0], p2[0]) *  .... * e(p1[n], p2[n]) == 1
-     *
-     * @return the result of computing the pairing check
-     */
-    function check(G1Point[] memory p1, G2Point[] memory p2)
-    internal
-    view
-    returns (bool)
-    {
-        require(p1.length == p2.length, "EC pairing p1 length != p2 length");
-        uint256 elements = p1.length;
-        uint256 inputSize = elements * 6;
-        uint256[] memory input = new uint256[](inputSize);
-        for (uint256 i = 0; i < elements; i++) {
-            input[i * 6 + 0] = p1[i].x;
-            input[i * 6 + 1] = p1[i].y;
-            input[i * 6 + 2] = p2[i].x[0];
-            input[i * 6 + 3] = p2[i].x[1];
-            input[i * 6 + 4] = p2[i].y[0];
-            input[i * 6 + 5] = p2[i].y[1];
-        }
-        uint256[1] memory result;
-        bool success;
-        assembly {
-        // 0x08     id of precompiled bn256Pairing contract (checking the elliptic curve pairings)
-        // add(input, 0x20) since we have an unbounded array, the first 256 bits refer to its length
-        // mul(inputSize, 0x20) size of call parameters, each word is 0x20 bytes
-        // 32       size of result (one 32 byte boolean!)
-            success := staticcall(not(0), 0x08, add(input, 0x20), mul(inputSize, 0x20), result, 32)
-        }
-        require(success, "elliptic curve pairing failed");
-        return result[0] == 1;
-    }
-
-    /**
-     * @dev Convenience method for a pairing check for two pairs.
-     */
-    function check2(
-        G1Point memory a1,
-        G2Point memory a2,
-        G1Point memory b1,
-        G2Point memory b2
-    ) internal view returns (bool) {
-        G1Point[] memory p1 = new G1Point[](2);
-        G2Point[] memory p2 = new G2Point[](2);
-        p1[0] = a1;
-        p1[1] = b1;
-        p2[0] = a2;
-        p2[1] = b2;
-        return check(p1, p2);
-    }
-
-    /**
-     * @dev Convenience method for a pairing check for three pairs.
-     */
-    function check3(
-        G1Point memory a1,
-        G2Point memory a2,
-        G1Point memory b1,
-        G2Point memory b2,
-        G1Point memory c1,
-        G2Point memory c2
-    ) internal view returns (bool) {
-        G1Point[] memory p1 = new G1Point[](3);
-        G2Point[] memory p2 = new G2Point[](3);
-        p1[0] = a1;
-        p1[1] = b1;
-        p1[2] = c1;
-        p2[0] = a2;
-        p2[1] = b2;
-        p2[2] = c2;
-        return check(p1, p2);
     }
 }
