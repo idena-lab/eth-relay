@@ -15,11 +15,11 @@ module.exports = {
     .use(bnChai(BN))
     .use(require("chai-as-promised"))
     .should(),
-  randHex: (len) => {
+  randHex: len => {
     let ret = "";
     for (let i = 0; i < len; ++i) {
       ret += HexChars[_.random(0, HexChars.length - 1)];
     }
     return ret;
-  },
+  }
 };
