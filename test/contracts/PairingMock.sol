@@ -3,7 +3,6 @@ pragma experimental ABIEncoderV2;
 
 import "../../contracts/Pairing.sol";
 
-
 contract PairingMock {
 
     function scalarMult(uint256[2] memory p, uint256 s) public view returns (Pairing.G1Point memory) {

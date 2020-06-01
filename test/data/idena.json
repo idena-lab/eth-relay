@@ -1,0 +1,310 @@
+{
+  "verify": [
+    {
+      "keys": 1,
+      "apk1": [
+        "0x305500ab96213f5b9244fcdfd4089d7a36682c3e143c4d9acad87675c4de92d4",
+        "0x2901ec1af71d02e84970819b5629ae0ac576336ccb5ce212921c5387b66fe831"
+      ],
+      "apk2": [
+        "0x22c3db29afcc59f90664b18ef18b0503d1bf2ae292a5c8a6bac054a6f90ebac7",
+        "0x087b5d548203b9882d9241b6dc79128b19a0739e8dc7b2fe4a3a8c697dd3f7a4",
+        "0x1c8d55d88fe30abd0021f6a15befce9582529e702e60c1bcc74be77087ddbf75",
+        "0x0f07352cff1e2d259bfecdccb1c1ab81e1f9336d9192647d748707d2b663bf9a"
+      ],
+      "message": "",
+      "signature": [
+        "0x187b416d0e70882258e583eb99b904f98e5b93f5fa1813bfa72b30ba0a7ebd2c",
+        "0x15e1cbefd758735f71ac0151bb201456b79b052dd1346a18e0a2f5d195ae12b5"
+      ]
+    },
+    {
+      "keys": 1,
+      "apk1": [
+        "0x305500ab96213f5b9244fcdfd4089d7a36682c3e143c4d9acad87675c4de92d4",
+        "0x2901ec1af71d02e84970819b5629ae0ac576336ccb5ce212921c5387b66fe831"
+      ],
+      "apk2": [
+        "0x22c3db29afcc59f90664b18ef18b0503d1bf2ae292a5c8a6bac054a6f90ebac7",
+        "0x087b5d548203b9882d9241b6dc79128b19a0739e8dc7b2fe4a3a8c697dd3f7a4",
+        "0x1c8d55d88fe30abd0021f6a15befce9582529e702e60c1bcc74be77087ddbf75",
+        "0x0f07352cff1e2d259bfecdccb1c1ab81e1f9336d9192647d748707d2b663bf9a"
+      ],
+      "message": "idena go",
+      "signature": [
+        "0x277f6dbf2b5cd0042a320023c224328323f7b5265e941133543aefa7c8e0aa6d",
+        "0x0debd9071e664c43b5dc87795356148a81f2d6270385fb757eb243bb9c494751"
+      ]
+    },
+    {
+      "keys": 1,
+      "apk1": [
+        "0x305500ab96213f5b9244fcdfd4089d7a36682c3e143c4d9acad87675c4de92d4",
+        "0x2901ec1af71d02e84970819b5629ae0ac576336ccb5ce212921c5387b66fe831"
+      ],
+      "apk2": [
+        "0x22c3db29afcc59f90664b18ef18b0503d1bf2ae292a5c8a6bac054a6f90ebac7",
+        "0x087b5d548203b9882d9241b6dc79128b19a0739e8dc7b2fe4a3a8c697dd3f7a4",
+        "0x1c8d55d88fe30abd0021f6a15befce9582529e702e60c1bcc74be77087ddbf75",
+        "0x0f07352cff1e2d259bfecdccb1c1ab81e1f9336d9192647d748707d2b663bf9a"
+      ],
+      "message": "long message: 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+      "signature": [
+        "0x0f4a1a33242f6a5a0eda5e364ea48d5267dcd49ab56a238b16292ab8de4754d3",
+        "0x0f1050b86bc5bcf8876c3346ec71e6d069ffc3d2ae9cd4d8c85cccd6785f091d"
+      ]
+    },
+    {
+      "keys": 2,
+      "apk1": [
+        "0x2051cf84656902ea25f87a0853aab64355970520322e555961e57fb4b4c3226b",
+        "0x1f05cd5c1c70d22f50e4843d91da4b28eff1c5b0bfc842be589a32be43606b82"
+      ],
+      "apk2": [
+        "0x26d1bde3bcbc6824aa9608dcd8dffa50cd39735d98f7f42ce838324a87b390be",
+        "0x0c3ec2260feb5fde7846919ad9a2ef4c012038deeda2efe90ec0db54d905fb9e",
+        "0x118c85c00962a63e65bfb33d2130ca33d981ad0c34aed7f70e7d513d1de950e5",
+        "0x0f9143ae176d64edf97f12f8218e0139d75668f427042fe2ae49417e555aac79"
+      ],
+      "message": "2 keys 1",
+      "signature": [
+        "0x063ee1572f232264cce8ab9a876fa69b371a07064a1c2b78e1300f77790af24e",
+        "0x00366ef6a57a28e162274d3f7f792c015924d746fc8dcd69db872f0d65cfa57d"
+      ]
+    },
+    {
+      "keys": 2,
+      "apk1": [
+        "0x2051cf84656902ea25f87a0853aab64355970520322e555961e57fb4b4c3226b",
+        "0x1f05cd5c1c70d22f50e4843d91da4b28eff1c5b0bfc842be589a32be43606b82"
+      ],
+      "apk2": [
+        "0x26d1bde3bcbc6824aa9608dcd8dffa50cd39735d98f7f42ce838324a87b390be",
+        "0x0c3ec2260feb5fde7846919ad9a2ef4c012038deeda2efe90ec0db54d905fb9e",
+        "0x118c85c00962a63e65bfb33d2130ca33d981ad0c34aed7f70e7d513d1de950e5",
+        "0x0f9143ae176d64edf97f12f8218e0139d75668f427042fe2ae49417e555aac79"
+      ],
+      "message": "2 keys 2",
+      "signature": [
+        "0x045cc87f13944a3383d3cc700ecb4e2f3713204b7580f0d3e1ba1b5aac4d0c03",
+        "0x2a8c4def0904df81b51356971d531eca3639e5d880491ab1c0b2b2dae9922acf"
+      ]
+    },
+    {
+      "keys": 3,
+      "apk1": [
+        "0x3030d01545bf5759d5ffb240a6b55286dacd351b456dc6f9869f7e5e9539d89d",
+        "0x1f9a4aa05fa669624639f33eb7603d184b5f8ddafec8780593a1513d1f18207f"
+      ],
+      "apk2": [
+        "0x1f8bce5ca81da3347a4d8c572a929855f7d9b084888d584ce8ab52f9339bac3e",
+        "0x168bf8faf953cd50000f7998dc29aed06d6f4748d7e8b6b0d3fe1f3d05c00347",
+        "0x2250202171e8986be3445ad81db7ab7d7e79ba80bc19bbfc9dce112bd9efaddc",
+        "0x1937e149782eb516468921be0bc2d848a1223574fe6553aadb7dafe5b934f01d"
+      ],
+      "message": "3 keys",
+      "signature": [
+        "0x0b9007013644ee81f4913a25c7c1ea1961545fe7705952b25256ce12c23a239f",
+        "0x0267c19c6ba53cdd2a5ef55847b8b1ab3a268c9f21c2249e0b40448f0d96fd26"
+      ]
+    },
+    {
+      "keys": 4,
+      "apk1": [
+        "0x00802b101f1fa0782d36240594923b66b3206f060aaa7b0873651063bf8f89af",
+        "0x07ba4046fc447a3a329f576c7c3a53e5f9a517237c32559532490e087c27be96"
+      ],
+      "apk2": [
+        "0x07c4a37713affbb0646f344de97f882fc26c2ee082cdb889c173905915e2ab0d",
+        "0x2fe287eb46f3d7259efcd7319d4cc7aabc65f1a8a21e54572cb8394053e25d67",
+        "0x26da5917a1d3cb34280b193d323eccd7a6e3c23c318bf1c3846575258136b55c",
+        "0x0fb1e90b0c460adae35a1eb81c6ee1272bdfe32a1c705d175f2b7688ea8dcf56"
+      ],
+      "message": "4 keys",
+      "signature": [
+        "0x10be28588461ced57cf95ff2f4102282289985a994ab270879f828e8e4da7f1f",
+        "0x0912cb2167783ed46431e1c1f7b9bc1698f5ddf7d2a551f4e18f5b413b17dd46"
+      ]
+    },
+    {
+      "keys": 10,
+      "apk1": [
+        "0x25891c5c016365042283815acd81ff6a3abe0723d225d07b294fb864b7ee5c73",
+        "0x0c306550357c86363a7e8679131ba8b96b164cc8d0e15ee80697745e1c953515"
+      ],
+      "apk2": [
+        "0x0104037331ebd367df330d79b4df149a47d19d7264868eaab3a209c228d3cd29",
+        "0x01e176ab329ff97a4cb58496f7fe2d75c2a60fef7d91e1ea0bfe81bb7e0762f6",
+        "0x0df2c5da7485420df89ae500ac8537cc243dfe4c675bb7c1954c3a0995544e3a",
+        "0x1b45dbbeae126f8de0fa95fdace18b393f8ca09b3f0ae1250bef5c8c5c36cfae"
+      ],
+      "message": "10 keys",
+      "signature": [
+        "0x1111171bc4b4fb8ec08b3be69410ccfac8a67c806d7902986d55aeb258f207b5",
+        "0x1a964994044fae1bfca9e6ba00a4c7f4334609b497e9df3143f16f2b9965baaa"
+      ]
+    },
+    {
+      "keys": 100,
+      "apk1": [
+        "0x26ba460675890bc3f0ddea0bf9dbaa45c5a3c1e8507e246bb1388d8ad9c701fd",
+        "0x11a7b9f4c2d482541857822bcecaebe8b7a0629a34f77b864e6a7b3c8c89e607"
+      ],
+      "apk2": [
+        "0x18780d7067fa76fd23819df064259004b425b731bc409abfa10b7e675a51b511",
+        "0x1d40f6a6861392f84c8a478a9797c12661640cd5e6cb82d1c667543dca640460",
+        "0x222966e3bd7886c26880e4e2c7f7628bc3170bd6231b0b30b4994cda26c3466e",
+        "0x21439dfb229367aeca5f4634d55e18c90a922d4fb978daaeac71b2090dc5ce5d"
+      ],
+      "message": "100 keys",
+      "signature": [
+        "0x198dbd28368a9ccd6b15882247aa933a762c5fb50b0f5e07ecd0b13852004560",
+        "0x14b4ddedf04c32ae5a8677758e6a9eb3431e607db86ed81ed7198586ac3c05a8"
+      ]
+    },
+    {
+      "keys": 356,
+      "apk1": [
+        "0x1347f4cb9f9e2c6b7a1d90a643a3189c86f1c772a69ff81a70681a5bf7e8b328",
+        "0x09b6525534a34556cb6b4ab3d7b076b0bae0190e8a3240f47a8e269cef5c98ac"
+      ],
+      "apk2": [
+        "0x1fa1ab7a0cd279129b2cae1542c7fd66986932e82b435c168c0149c386d37055",
+        "0x2db4bcc112c36aa13c12a5dbe149e16145f627c89ab79118ba27433da3753b4f",
+        "0x0153614d360a09549e18eb5433ce35b2b733e1fbe6296a2c1b9fcae2c2876466",
+        "0x28d6b396795746912c27ff31e3b8a2d7da42b59a8a1c7d58e6af9dd9657f6541"
+      ],
+      "message": "356 keys",
+      "signature": [
+        "0x0563912c7d9f1be36dd15b3c36fc855a2aceed942f304e3860d5078f237dfbd1",
+        "0x04a04750d5d5119c2f93c2cd9504c85d767eb55a6cb05c8a625bc28edc0975e5"
+      ]
+    },
+    {
+      "keys": 800,
+      "apk1": [
+        "0x105b6b41964333744a5e97bb1aacded05557790a579d2c63cd389cb1d8ed1aaa",
+        "0x2e46bb2bc584577b37e70e525ce4ede2b356f769b075768481c05376d7e78d1b"
+      ],
+      "apk2": [
+        "0x0cb47fa9e96969462a2011e9e1dfe1955550b397e47acf05c03663beb74180ea",
+        "0x2a9776f1f7eb7ef618273c6bc9c071d4816633be6aafcbddbe29afc1f3d665ed",
+        "0x0a6b8b3c9d7662556747916e2e0eec1d6d96251805266e8daba21992031fcbcf",
+        "0x00f7c696a9e2b7197f0b8b46f3e16bdf8ad1823072326fea1c121a8cbc69c691"
+      ],
+      "message": "800 keys",
+      "signature": [
+        "0x202d4a8a41bb4dfd7ebe91bcd4fdc35cacc230bc82114ea11e04e39abd02d283",
+        "0x2fea1fc2fca173193287bcc8176e001f5544addcacc17c3a31c6ac049dee9e68"
+      ]
+    },
+    {
+      "keys": 1024,
+      "apk1": [
+        "0x085b60826eb6d13e9fcb0d25f2ebbc24d584002dc432d57a0e470a479b6621ea",
+        "0x170fa7ea3d708e7d84870c873c0d217aa49d8f67725af31ebce535cfacbf0f42"
+      ],
+      "apk2": [
+        "0x18e34b3c118bce2c936622ba9cb6b6924450855ebbd2ae311031248127fbd072",
+        "0x24a124bde05eb4f7a4e50b8f975eb44ff7f2e874ec4da5cd6ddd7460549f26e4",
+        "0x258182089807a49680b30a46b06823ed2669e5f48fb3c65bd6395a9cda30d787",
+        "0x1b9e6e513eff16946efd706d94c8ac05aa32e248363a1ecc9624a040540462d2"
+      ],
+      "message": "1024 keys",
+      "signature": [
+        "0x120da16ca80854fe4ae8d3c14607b42b0c83671117446478664678c1905ee360",
+        "0x0fbd30aeed81c5daa1578f3b3b7c6d1dd1769f94f28cf7efacafd4d3b4b7441f"
+      ]
+    },
+    {
+      "keys": 2048,
+      "apk1": [
+        "0x2e82339d28b43683ce75f80a11fc752ec06837745367a0e54c1d9bac8c8457b1",
+        "0x1e966c02e8c4273c9615fef5797506c9ea18051efd6acefe036a46ae7024d66a"
+      ],
+      "apk2": [
+        "0x208b2678049aba937fd20a6763b52c31e5ddbbb80741ec8a0f86be53d6403162",
+        "0x29a511f1d2a1d44474c411d47a3162dd218de3b97cf8cb0b43307136f3c43551",
+        "0x017e1dd0a9ad5c7b753f11afc79c11aab2bae3aeac44a6e00d0c0a67798a9552",
+        "0x18d303d1c6f0acb2982549833b089b52ed8dbc26a45edbefcc06c49084099f75"
+      ],
+      "message": "2048 keys",
+      "signature": [
+        "0x0b088eaff5e6ddc83ee5e3d4440ec15afae8fd80710e7fff8849aaaed950d549",
+        "0x0eaddcb99db797f8669e5d9a818b2c6b3bebfb4f17324f9c08c6a6a928bb2ff5"
+      ]
+    },
+    {
+      "keys": 4000,
+      "apk1": [
+        "0x134fba9194fc4639ceb992cce0cffb6b7d5cc3be19e25255443bcdd61152e448",
+        "0x1c2be89f70527ff4549f75794bdb43f15e962d07df5377cbb474df1880cf4035"
+      ],
+      "apk2": [
+        "0x0128e1b3cebc049c8e803324648d16907265dfd44f8e0f32c2b5ba6df5b3f83c",
+        "0x209484cf1551780cae11227e1fc8d00515df66cf82167fa17a2ed3e9f79a7239",
+        "0x2b4dc2acd192017411d98f5a7c75ea76b905c711cbe19a26486c9ae2702f9f8e",
+        "0x1155b406546a7f6fdb37117a03520ab06ae8ac42c6a75e0271a159c2b0077c45"
+      ],
+      "message": "4000 keys",
+      "signature": [
+        "0x20b62690e7f03ee37938129f7c8ac3947c0b8456b54fd3b322d402f20b6a3853",
+        "0x104045bccb5cdd690ad832fdf7739489052557818364769acf34199a64eac8cd"
+      ]
+    },
+    {
+      "keys": 6000,
+      "apk1": [
+        "0x1541cf7c898f918a0d5e1174ae2b3a5a86cee5d4ad14e84959aa3033a2ded4c9",
+        "0x2b2007215b9f3830c76ac1038d76d72306049cdf364878ca7f28f402111bcbd8"
+      ],
+      "apk2": [
+        "0x122b7ae28c95601cccc5c2ad11f716d3e3d20877c8f9bfaee1914557f27d34bf",
+        "0x10b7b9b6f4432bf3b248b68c3766eeb36f1f88f77103ecb10662df2efb53d7a6",
+        "0x10e176b92c1bf2e038a69938ea59b42fbc86eb7c2ef668834a96305d616b925d",
+        "0x2b4bdac1648b1b81d12ad9af5c1663c6acd3d13a53bd4ba2dfc1646bff290e33"
+      ],
+      "message": "4000 keys",
+      "signature": [
+        "0x290bd2d3b379b78ab894f7eef4194a0010ebe67e95164c92a2bf8ca0f6d43f11",
+        "0x0fef6ecc39f10e84f4bbef38ffe555033ea69d6b5fcb77ef78e0e957d7ba6350"
+      ]
+    },
+    {
+      "keys": 9000,
+      "apk1": [
+        "0x17a254b20688c603fef84c0265eff981972ac4b99c693aca7dc8949628ed17ea",
+        "0x04cd106340ed79dd577fc5cd7e513190b7538ae3eef93b7eb22db71e03cd11fa"
+      ],
+      "apk2": [
+        "0x0e70e05bdc6d4980b0f090aeaf5c623cc428bc14d925bd4ef84f11544f1c87d8",
+        "0x18a90b60e53a0d7ae2d9ffa4520f18a3dfdd1d3f78fe217a27a4c6c49c76e9d4",
+        "0x015d78e33e64cc8ac63a24de24fd3672def9290d21186e4b3d3afa6a69beaff9",
+        "0x2a34799a04f0194fbcb7e9b614765914649baf4ab672cf995fc43aa4662baa7f"
+      ],
+      "message": "9000 keys",
+      "signature": [
+        "0x2ca1cbe31c431f36a82af2d8f369ef102f89557c00fac4d3f6ba7a89ce2a348f",
+        "0x046887a34c919d5556120dc61b2c68cff58ba41459fe6fd10936efe117d57e04"
+      ]
+    },
+    {
+      "keys": 10000,
+      "apk1": [
+        "0x22e3451072d656f0cd0dd8cb5bb62d0b84fe8157f3f084604b66fb538f5d8905",
+        "0x2b86a592091b9b1f75ac52f03e41e6ccd94df344e759132a2c917a6cc54b13b1"
+      ],
+      "apk2": [
+        "0x0e0d536bead4b782910109e68f843f5ea6f81fde46e14ae6c06e3019474e7c2a",
+        "0x2d31d67e9c95382694148d1367df34b9bf402daf7662674baae69e34511cad92",
+        "0x29d513ad0bd5b3d37d9bfb94bf2c5ca7fdab7f27a8ccd9249d21e2b8557e3933",
+        "0x18c89efe2d41f2087f332ac651f52b38f1466b271b565fec6f1281c8eabf1472"
+      ],
+      "message": "10000 keys",
+      "signature": [
+        "0x168d5e5b2cc40409d23c3ea2600a78454417443f2b428e76041e26a083f94f0d",
+        "0x1ffa421fb3ced54bc9926486c776b343b64c595b49353a707fcc0fb87f81d931"
+      ]
+    }
+  ]
+}

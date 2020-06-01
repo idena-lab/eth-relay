@@ -162,7 +162,7 @@ contract IdenaWorldState is Ownable {
         uint256[4] memory apk2,
         bytes memory m,
         uint256[2] memory signature
-    ) public view {
+    ) internal view {
         Pairing.G2Point memory apk2Point = Pairing.G2Point(
             [apk2[0], apk2[1]],
             [apk2[2], apk2[3]]

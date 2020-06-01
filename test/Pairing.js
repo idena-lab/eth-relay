@@ -2,7 +2,7 @@ const h = require("./helper")
 const BN = require("bn.js")
 
 const PairingMock = artifacts.require("PairingMock")
-const data = require("./data/Pairing.json")
+const pairingData = require("./data/Pairing.json")
 
 contract("Pairing", (accounts) => {
   let pairing
@@ -12,7 +12,7 @@ contract("Pairing", (accounts) => {
   })
 
   describe("> multiplication", async () => {
-    for (const [i, d] of data.multiplication.valid.entries()) {
+    for (const [i, d] of pairingData.multiplication.valid.entries()) {
       it(`should scalarMult G1 point (${i + 1})`, async () => {
         const ret = await pairing.scalarMult.call([d.input.x,
           d.input.y
@@ -24,7 +24,7 @@ contract("Pairing", (accounts) => {
   })
 
   describe("> hashToG1", async () => {
-    for (const [i, d] of data.hashToG1.valid.entries()) {
+    for (const [i, d] of pairingData.hashToG1.valid.entries()) {
       it(`check hash (${i + 1})`, async () => {
         const ret = await pairing.hashToG1.call(d.input)
         ret.x.should.eq.BN(new BN(d.output.x.substr(2), 16))
@@ -33,8 +33,8 @@ contract("Pairing", (accounts) => {
     }
   })
 
-  describe.only("> pairing", async () => {
-    for (const [i, d] of data.pairing.valid.entries()) {
+  describe("> pairing", async () => {
+    for (const [i, d] of pairingData.pairing.valid.entries()) {
       it(`check pairing (${i + 1})`, async () => {
         let pl = d.input.points
         const ret = await pairing.check2.call(pl.slice(0, 2), pl.slice(2, 6), pl.slice(6, 8), pl.slice(8))
