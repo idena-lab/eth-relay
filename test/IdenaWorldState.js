@@ -3,7 +3,7 @@ const BN = require("bn.js");
 
 const IdenaWorldState = artifacts.require("IdenaWorldState");
 const IdenaWorldStateMock = artifacts.require("IdenaWorldStateMock");
-const idenaData = require("./data/idena.json");
+const idenaData = require("./data/verify.json");
 
 contract("IdenaWorldState", accounts => {
   const deployer = accounts[0];
@@ -22,8 +22,8 @@ contract("IdenaWorldState", accounts => {
     });
   });
 
-  describe.only("> verify", async () => {
-    for (const [i, d] of idenaData.verify.entries()) {
+  describe("> verify", async () => {
+    for (const [i, d] of idenaData.cases.entries()) {
       it(`check verify (${i + 1}): keys=${d.keys}, message=${d.message}`, async () => {
         // bad message
         await mock.verify
