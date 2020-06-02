@@ -3,7 +3,8 @@ const BN = require("bn.js");
 
 const IdenaWorldState = artifacts.require("IdenaWorldState");
 const IdenaWorldStateMock = artifacts.require("IdenaWorldStateMock");
-const idenaData = require("./data/verify.json");
+const verifyData = require("./data/verify.json");
+const stateData = require("./data/state.json");
 
 contract("IdenaWorldState", accounts => {
   const deployer = accounts[0];
@@ -22,8 +23,8 @@ contract("IdenaWorldState", accounts => {
     });
   });
 
-  describe("> verify", async () => {
-    for (const [i, d] of idenaData.cases.entries()) {
+  describe.skip("> verify", async () => {
+    for (const [i, d] of verifyData.cases.entries()) {
       it(`check verify (${i + 1}): keys=${d.keys}, message=${d.message}`, async () => {
         // bad message
         await mock.verify
@@ -52,40 +53,49 @@ contract("IdenaWorldState", accounts => {
     }
   });
 
-  describe("> initialize", async () => {
-    const epoch = new BN(40);
-    const identities = [accounts[1], accounts[2]];
-    const pubkeys = [
-      [new BN(h.randHex(64), 16), new BN(h.randHex(64), 16)],
-      [new BN(h.randHex(64), 16), new BN(h.randHex(64), 16)]
+  const checkState = async checks => {
+    (await this.idenaWorld.initialized()).should.equal(true);
+    (await this.idenaWorld.epoch()).should.eq.BN(new BN(checks.epoch));
+    (await this.idenaWorld.population()).should.eq.BN(new BN(checks.population));
+
+    // first, middle, last
+    let idAddrs = [
+      await this.idenaWorld.identityByIndex(0),
+      await this.idenaWorld.identityByIndex(checks.population / 2),
+      await this.idenaWorld.identityByIndex(checks.population - 1)
     ];
+    let checkIds = [checks.firstId, checks.middleId, checks.lastId];
+    for (let i = 0; i < checkIds.length; i++) {
+      let addr = idAddrs[i].toLowerCase();
+      addr.should.equal(checkIds[i].address);
+      (await this.idenaWorld.isIdentity(addr)).should.equal(true);
+      const st = await this.idenaWorld.stateOf(addr);
+      // console.log(st);
+      st.pubX.should.eq.BN(new BN(checkIds[i].pubKey[0].substr(2), 16));
+      st.pubY.should.eq.BN(new BN(checkIds[i].pubKey[1].substr(2), 16));
+    }
+
+    (await this.idenaWorld.root()).should.eq.BN(new BN(checks.root.substr(2), 16));
+  };
+
+  describe.only("> initialize", async () => {
+    const initData = stateData.init;
+    const epoch = new BN(initData.epoch);
     it("init should failed by non-owner", async () => {
       const nonOwner = accounts[3];
       await this.idenaWorld
-        .init(epoch, identities, pubkeys, {
+        .init(epoch, initData.identities, initData.pubKeys, {
           from: nonOwner
         })
         .should.be.rejectedWith(h.EVMRevert);
     });
-    it("init should succ by owner", async () => {
+    it(stateData.init.comment, async () => {
       const owner = deployer;
-      await this.idenaWorld.init(epoch, identities, pubkeys, {
+      let tx = await this.idenaWorld.init(epoch, initData.identities, initData.pubKeys, {
         from: owner
       }).should.be.fulfilled;
-    });
-    it("check states after init", async () => {
-      (await this.idenaWorld.initialized()).should.equal(true);
-      (await this.idenaWorld.epoch()).should.eq.BN(epoch);
-      (await this.idenaWorld.population()).should.eq.BN(new BN(identities.length));
-      const cIdentities = await this.idenaWorld.identities();
-      for (let i = 0; i < cIdentities.length; i++) {
-        cIdentities[i].toLowerCase().should.equal(identities[i].toLowerCase());
-        const cState = await this.idenaWorld.stateOf(identities[i]);
-        // console.log(cState);
-        cState.pubX.should.eq.BN(pubkeys[i][0]);
-        cState.pubY.should.eq.BN(pubkeys[i][1]);
-        (await this.idenaWorld.isIdentity(identities[i])).should.equal(true);
-      }
+      console.log(`Gas used: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+      await checkState(initData.checks);
     });
   });
 

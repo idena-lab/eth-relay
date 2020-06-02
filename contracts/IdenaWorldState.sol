@@ -56,8 +56,7 @@ contract IdenaWorldState is Ownable {
             _states[addr] = IdState(pubkey[0], pubkey[1]);
             _identities.push(addr);
         }
-
-        // todo: calculate root hash
+				_updateRoot(epoch, identities, pubkeys, bytes(""));
 
         _population = _identities.length;
         emit Updated(_epoch, _population);
@@ -92,8 +91,8 @@ contract IdenaWorldState is Ownable {
         (uint256 count, Pairing.G1Point memory apk1) = _buildAPK1(signFlags);
         // verify signature
         require(count > _identities.length.mul(2).div(3), "signature count less than 2/3");
-        bytes memory m = _prepareMsg(epoch, identities, pubkeys, removeFlags);
-        _verify(apk1, apk2, m, signature);
+        _updateRoot(epoch, identities, pubkeys, removeFlags);
+        _verify(apk1, apk2, abi.encodePacked(_root), signature);
 
         // update _identities, _states, _population
         _updateStates(identities, pubkeys, removeFlags, removeCount);
@@ -136,15 +135,20 @@ contract IdenaWorldState is Ownable {
     }
 
     /**
-     * @return the message to sign
+     * update state root
      */
-    function _prepareMsg(
+    function _updateRoot(
         uint256 epoch,
         address[] memory identities,
         uint256[2][] memory pubkeys,
         bytes memory removeFlags
-    ) internal view returns (bytes memory) {
-        return abi.encode(_root, epoch, keccak256(removeFlags), identities, pubkeys);
+    ) internal {
+        require(identities.length == pubkeys.length, "array length not match");
+        bytes32 hIds;
+        for (uint256 i = 0; i < identities.length; i++) {
+            hIds = keccak256(abi.encodePacked(hIds, identities[i], pubkeys[i][0], pubkeys[i][1]));
+        }
+        _root = uint256(keccak256(abi.encodePacked(_root, epoch, hIds, keccak256(removeFlags))));
     }
 
     /**
@@ -238,6 +242,10 @@ contract IdenaWorldState is Ownable {
         return _initialized;
     }
 
+    function root() public view returns (uint256) {
+        return _root;
+    }
+
     function epoch() public view returns (uint256) {
         return _epoch;
     }
@@ -252,6 +260,10 @@ contract IdenaWorldState is Ownable {
             result[i] = _identities[i];
         }
         return result;
+    }
+
+    function identityByIndex(uint256 i) public view returns (address) {
+        return _identities[i];
     }
 
     function stateOf(address addr) public view returns (IdState memory) {
