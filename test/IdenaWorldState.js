@@ -23,7 +23,7 @@ contract("IdenaWorldState", accounts => {
     });
   });
 
-  describe.skip("> verify", async () => {
+  describe("> verify", async () => {
     for (const [i, d] of verifyData.cases.entries()) {
       it(`check verify (${i + 1}): keys=${d.keys}, message=${d.message}`, async () => {
         // bad message
@@ -48,7 +48,7 @@ contract("IdenaWorldState", accounts => {
         // await mock.verify(d.apk1, d.apk2, d.message, d.signature).should.be.fulfilled
         // gas cost: 600000 - 650000
         let gasCost = await mock.verify.estimateGas(d.apk1, d.apk2, d.message, d.signature).should.be.fulfilled;
-        console.log("  Gas cost: " + gasCost);
+        console.log("Gas cost: " + gasCost);
       });
     }
   });
@@ -61,7 +61,7 @@ contract("IdenaWorldState", accounts => {
     // first, middle, last
     let idAddrs = [
       await this.idenaWorld.identityByIndex(0),
-      await this.idenaWorld.identityByIndex(checks.population / 2),
+      await this.idenaWorld.identityByIndex(Math.floor(checks.population / 2)),
       await this.idenaWorld.identityByIndex(checks.population - 1)
     ];
     let checkIds = [checks.firstId, checks.middleId, checks.lastId];
@@ -94,7 +94,7 @@ contract("IdenaWorldState", accounts => {
       let tx = await this.idenaWorld.init(epoch, initData.identities, initData.pubKeys, {
         from: owner
       }).should.be.fulfilled;
-      console.log(`Gas used: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+      console.log(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
       await checkState(initData.checks);
     });
   });
@@ -106,7 +106,7 @@ contract("IdenaWorldState", accounts => {
     for (const [i, d] of data.entries()) {
       it(d.comment, async () => {
         const epoch = new BN(d.epoch);
-        let tx = await this.idenaWorld.update(
+        let p = this.idenaWorld.update(
           epoch,
           d.newIdentities,
           d.newPubKeys,
@@ -118,8 +118,14 @@ contract("IdenaWorldState", accounts => {
           {
             from: randSender()
           }
-        ).should.be.fulfilled;
-        console.log(`Gas used: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+        );
+        if (d.checks.valid) {
+          let tx = await p.should.be.fulfilled;
+          console.log(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+        } else {
+          let err = await p.should.be.rejectedWith(h.EVMRevert);
+          console.log(`Reverted as expected, reson: ${err.reason}`);
+        }
         await checkState(d.checks);
       });
     }

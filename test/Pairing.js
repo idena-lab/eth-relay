@@ -38,7 +38,7 @@ contract("Pairing", (accounts) => {
       it(`check pairing (${i + 1})`, async () => {
         let pl = d.input.points
         const ret = await pairing.check2.call(pl.slice(0, 2), pl.slice(2, 6), pl.slice(6, 8), pl.slice(8))
-        console.log(ret)
+        // console.log(ret)
         ret.should.equal(d.output.success)
       })
     }
