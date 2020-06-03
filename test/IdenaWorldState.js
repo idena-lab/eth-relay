@@ -99,7 +99,29 @@ contract("IdenaWorldState", accounts => {
     });
   });
 
-  describe("> update", async () => {
-    // todo
+  describe.only("> update", async () => {
+    const operators = [owner, accounts[1], accounts[2]];
+    const randSender = () => accounts[_.random(0, accounts.length - 1)];
+    const data = stateData.updates;
+    for (const [i, d] of data.entries()) {
+      it(d.comment, async () => {
+        const epoch = new BN(d.epoch);
+        let tx = await this.idenaWorld.update(
+          epoch,
+          d.newIdentities,
+          d.newPubKeys,
+          d.removeFlags,
+          d.removeCount,
+          d.signFlags,
+          d.signature,
+          d.apk2,
+          {
+            from: randSender()
+          }
+        ).should.be.fulfilled;
+        console.log(`Gas used: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+        await checkState(d.checks);
+      });
+    }
   });
 });

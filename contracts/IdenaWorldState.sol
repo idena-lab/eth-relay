@@ -18,7 +18,6 @@ contract IdenaWorldState is Ownable {
     uint256 private _epoch;
     // Identities of latest epoch, the array size only grows, size is controlled by _populcation
     // Newbie, Verified, Human are identities, while others(Unknown, Killed, Suspended, Candidate) are not
-    // todo: consider to use linked list instead of array and map
     address[] private _identities;
     uint256 private _population;
     // identity keys
@@ -56,7 +55,7 @@ contract IdenaWorldState is Ownable {
             _states[addr] = IdState(pubkey[0], pubkey[1]);
             _identities.push(addr);
         }
-				_updateRoot(epoch, identities, pubkeys, bytes(""));
+        _updateRoot(epoch, identities, pubkeys, bytes(""));
 
         _population = _identities.length;
         emit Updated(_epoch, _population);
@@ -90,7 +89,7 @@ contract IdenaWorldState is Ownable {
 
         (uint256 count, Pairing.G1Point memory apk1) = _buildAPK1(signFlags);
         // verify signature
-        require(count > _identities.length.mul(2).div(3), "signature count less than 2/3");
+        require(count > _population.mul(2).div(3), "not enough signatures");
         _updateRoot(epoch, identities, pubkeys, removeFlags);
         _verify(apk1, apk2, abi.encodePacked(_root), signature);
 
@@ -108,7 +107,7 @@ contract IdenaWorldState is Ownable {
      */
     function _buildAPK1(bytes memory signFlags) internal view returns (uint256, Pairing.G1Point memory) {
         uint256 oldPop = _population;
-        require(signFlags.length == (oldPop + 7) / 8, "invalid remove flags");
+        require(signFlags.length == (oldPop + 7) / 8, "invalid sign flags");
         bool success;
         uint256 count;
         uint256[4] memory apk;
@@ -135,7 +134,7 @@ contract IdenaWorldState is Ownable {
     }
 
     /**
-     * update state root
+     * @dev update state root
      */
     function _updateRoot(
         uint256 epoch,
@@ -168,7 +167,7 @@ contract IdenaWorldState is Ownable {
         p2[0] = Pairing.g2();
         p1[1] = Pairing.g1();
         p2[1] = apk2Point;
-        require(Pairing.check(p1, p2), "invalid apk2");
+        require(Pairing.check(p1, p2), "validate apk2 failed");
 
         // check signature: e(S, g2) == e(H(m), apk2)
         Pairing.G1Point memory sigPoint = Pairing.G1Point(signature[0], signature[1]);
@@ -176,7 +175,7 @@ contract IdenaWorldState is Ownable {
         p2[0] = Pairing.g2();
         p1[1] = Pairing.hashToG1(m);
         p2[1] = apk2Point;
-        require(Pairing.check(p1, p2), "invalid signature");
+        require(Pairing.check(p1, p2), "validate signature failed");
     }
 
     /**
@@ -193,10 +192,11 @@ contract IdenaWorldState is Ownable {
         require(removeFlags.length == (oldPop + 7) / 8, "invalid remove flags");
         uint256 newPop = oldPop.sub(removeCount).add(identities.length);
 
-        uint256[] memory moveIndexes;
-        uint256 movePushed = 0;
+        uint256[] memory emptySlots;
+        uint256 emptyCount = 0;
         if (newPop < oldPop) {
-            moveIndexes = new uint256[](oldPop - newPop);
+            //todo: this may exceed the stack size when removed too many ids
+            emptySlots = new uint256[](oldPop - newPop);
         }
 
         uint8 rf;
@@ -204,27 +204,20 @@ contract IdenaWorldState is Ownable {
         // used to check parameter removeCount
         uint256 realRemoved = 0;
         address addr;
-        uint256[2] memory pubkey;
         for (uint256 i = 0; i < oldPop; ) {
             rf = uint8(removeFlags[i / 8]);
             for (uint256 j = i + 8; i < j; i++) {
-                if ((rf & 0x1 != 1)) {
+                if ((rf & 0x1 == 0x1)) {
                     realRemoved++;
                     // clear removed identity's state
-                    delete _states[_identities[j]];
-                    // insert or move
+                    delete _states[_identities[i]];
+                    // insert or move (later)
                     if (insertCount < identities.length) {
-                        addr = identities[insertCount];
-                        // insert new identity
-                        pubkey = pubkeys[insertCount];
-                        require(_states[addr].pubX == 0, "duplicated identity");
-                        _states[addr] = IdState(pubkey[0], pubkey[1]);
-                        _identities[i] = addr;
-                        ++insertCount;
+                        _identities[i] = identities[insertCount];
+                        insertCount++;
                     } else {
-                        // save index to move
-                        moveIndexes[movePushed] = i;
-                        movePushed++;
+                        emptySlots[emptyCount] = i;
+                        emptyCount++;
                     }
                 }
                 rf >>= 1;
@@ -232,10 +225,51 @@ contract IdenaWorldState is Ownable {
         }
         require(realRemoved == removeCount, "wrong remove count supplied");
 
-        // todo: if (insertCount < identities.length) {
-        // todo: if movePushed > 0
-
+        if (insertCount < identities.length) {
+            _appendIds(identities, insertCount, oldPop);
+        } else if (emptyCount > 0) {
+            // adjust the origin list, filling the empty slots
+            uint256 head = 0;
+            uint256 tail = emptyCount-1;
+            for (uint256 i = oldPop - 1; i >= emptySlots[head]; i--) {
+                if (i != emptySlots[tail]) {
+                    _identities[emptySlots[head]] = _identities[i];
+										head++;
+                } else {
+                    tail--;
+                }
+            }
+        }
+        // update population
         _population = newPop;
+
+        // set public keys for new identities (must after all deletion)
+        uint256[2] memory pubkey;
+        for (uint256 i = 0; i < identities.length; i++) {
+            addr = identities[i];
+            require(_states[addr].pubX == 0, "duplicated identity");
+            pubkey = pubkeys[i];
+            _states[addr] = IdState(pubkey[0], pubkey[1]);
+        }
+    }
+
+    function _appendIds(
+        address[] memory identities,
+        uint256 fromPos,
+        uint256 oldPop
+    ) internal {
+        uint256 toPos = identities.length;
+        uint256 storeLen = _identities.length;
+        if (oldPop.add(toPos).sub(fromPos) > storeLen) {
+            toPos = storeLen.add(fromPos).sub(_population);
+        }
+        for (uint256 i = oldPop; fromPos < toPos; fromPos++) {
+            _identities[i] = identities[fromPos];
+            i++;
+        }
+        for (; fromPos < identities.length; fromPos++) {
+            _identities.push(identities[fromPos]);
+        }
     }
 
     function initialized() public view returns (bool) {

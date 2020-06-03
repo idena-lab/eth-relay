@@ -535,21 +535,21 @@
   },
   "updates": [
     {
-      "comment": "epoch(45): 70 signers(70%) +1 -0",
+      "comment": "epoch(45): +1 -1 by 70 signers(70%) ",
       "epoch": 45,
-      "newIdentities": ["0xf672c9c681ea6fb32eff492372affd1d378c0b69"],
+      "newIdentities": ["0x1eb4d4983828a80d3a7643900ada88b44c12d422"],
       "newPubKeys": [
         [
-          "0x23dd3d7b369d6cf3444bc7d2dd30ac06a1890883535a1628c08b352f138a4998",
-          "0x286d12add8158951de01cca3de8e4c5f87714f35e93f8ad980cba405b9eed101"
+          "0x05b23bf6a32802c03992e6eeac2485798450903eea20e791a1e402525e2660f6",
+          "0x08f968c63366bc0cd1f4e255bcd1c544677b17ed8d659b5497930088bafb90aa"
         ]
       ],
-      "removeFlags": "0x00000000000000000000000000",
-      "removeCount": 0,
+      "removeFlags": "0x00000000000000000000020000",
+      "removeCount": 1,
       "signFlags": "0x79ffb5ff97ddfcb4ddfc967b08",
       "signature": [
-        "0x107c1fd57121855e1a28f0e23b4ac4c3d76a847bf712d0ef4b7be7ec0d4ab2f6",
-        "0x097de767e46a24b0be162798bddfb989559393de26fa1e420c8a73060419aca7"
+        "0x1cae5370be565bb5cb4af46358dbc344758a087f3316ed53d5115fca59e7010d",
+        "0x07d11f0f584815cdfeac519a7ca8c112f80ebd201cccbf9d561f3f3de610380c"
       ],
       "apk2": [
         "0x2af6d3a79d366afcbfc552966403299a91fe1cf3ffb2c2b389cc89f51270eea7",
@@ -559,27 +559,27 @@
       ],
       "checks": {
         "epoch": 45,
-        "population": 101,
-        "root": "0xf32499b4e5238ebc6b51d0b9ef923a560d48e7a4c9c0c8084f2d59cd0958f8ae",
+        "population": 100,
+        "root": "0x4fb6c7b216992a38566fccc0ab637871f1d4d6d213c951715311cd65a518015c",
         "firstId": {
+          "address": "0x0b00bc70937ed45c215ffb19cad2fda63b5abd06",
+          "pubKey": [
+            "0x04dac09e3bd73a54554ae8e2e53c5ac33e92802f0cf7bb5df47bb79ed3f9a349",
+            "0x0ebfe5a38e758befa4ab59efc31fdba0849f0470d42c29fef4ab9b42c3e5a3e1"
+          ]
+        },
+        "lastId": {
           "address": "0x1eb4d4983828a80d3a7643900ada88b44c12d422",
           "pubKey": [
             "0x05b23bf6a32802c03992e6eeac2485798450903eea20e791a1e402525e2660f6",
             "0x08f968c63366bc0cd1f4e255bcd1c544677b17ed8d659b5497930088bafb90aa"
           ]
         },
-        "lastId": {
-          "address": "0xf672c9c681ea6fb32eff492372affd1d378c0b69",
-          "pubKey": [
-            "0x23dd3d7b369d6cf3444bc7d2dd30ac06a1890883535a1628c08b352f138a4998",
-            "0x286d12add8158951de01cca3de8e4c5f87714f35e93f8ad980cba405b9eed101"
-          ]
-        },
         "middleId": {
-          "address": "0xf90a54cf55163d5607c0fa43d1bbf873fa5ab64b",
+          "address": "0x7a23df140e824db998853f89f0d07beee4c7a92b",
           "pubKey": [
-            "0x1e2863ac1b722f710cc88b6ba02869316dab69f6be25d4430dad6dd1e3e9a9c8",
-            "0x04ffc657fe33b23325e18ed17563d8b957e17d28a611ec05ae3fbddeaba75023"
+            "0x2681d4b02cd0db0d7b912509e94f7ff207b28ee22d8015ae0a67d09dc0ebff14",
+            "0x2764addf0e4ec3ee05af8de29349ff6c91703bec625b589cdec2fd60a6364c52"
           ]
         }
       }
