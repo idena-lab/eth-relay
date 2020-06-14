@@ -55,7 +55,7 @@ contract("IdenaWorldState", accounts => {
 
   const checkState = async checks => {
     (await this.idenaWorld.initialized()).should.equal(true);
-    (await this.idenaWorld.epoch()).should.eq.BN(new BN(checks.epoch));
+    (await this.idenaWorld.height()).should.eq.BN(new BN(checks.height));
     (await this.idenaWorld.population()).should.eq.BN(new BN(checks.population));
 
     // first, middle, last
@@ -80,18 +80,18 @@ contract("IdenaWorldState", accounts => {
 
   describe.only("> initialize", async () => {
     const initData = stateData.init;
-    const epoch = new BN(initData.epoch);
+    const height = new BN(initData.height);
     it("init should failed by non-owner", async () => {
       const nonOwner = accounts[3];
       await this.idenaWorld
-        .init(epoch, initData.identities, initData.pubKeys, {
+        .init(height, initData.identities, initData.pubKeys, {
           from: nonOwner
         })
         .should.be.rejectedWith(h.EVMRevert);
     });
     it(stateData.init.comment, async () => {
       const owner = deployer;
-      let tx = await this.idenaWorld.init(epoch, initData.identities, initData.pubKeys, {
+      let tx = await this.idenaWorld.init(height, initData.identities, initData.pubKeys, {
         from: owner
       }).should.be.fulfilled;
       console.log(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
@@ -105,9 +105,9 @@ contract("IdenaWorldState", accounts => {
     const data = stateData.updates;
     for (const [i, d] of data.entries()) {
       it(d.comment, async () => {
-        const epoch = new BN(d.epoch);
+        const height = new BN(d.height);
         let p = this.idenaWorld.update(
-          epoch,
+          height,
           d.newIdentities,
           d.newPubKeys,
           d.removeFlags,

@@ -1,7 +1,7 @@
 {
   "init": {
     "comment": "init with 100 identities",
-    "epoch": 44,
+    "height": 44,
     "identities": [
       "0x094c264dde013436b4846e3359c8709cbe7c71d4",
       "0x0b00bc70937ed45c215ffb19cad2fda63b5abd06",
@@ -508,7 +508,7 @@
     ],
     "checks": {
       "valid": true,
-      "epoch": 44,
+      "height": 44,
       "population": 100,
       "root": "0xbb1bdc27a7bd577041bb082b0d37e9d60f115adc197f26cd750a381f5c69866b",
       "firstId": {
@@ -536,8 +536,8 @@
   },
   "updates": [
     {
-      "comment": "epoch(45): 100 identities -0 +100 by 88 signers(88.00%)",
-      "epoch": 45,
+      "comment": "height(45): 100 identities -0 +100 by 88 signers(88.00%)",
+      "height": 45,
       "newIdentities": [
         "0x15bf8a36250f99f875cdb271db085c4629d03d8e",
         "0x3acf9b30e276f584b25760eedb82c4aa07b3b60e",
@@ -1057,7 +1057,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 45,
+        "height": 45,
         "population": 200,
         "root": "0xf8efb61f93b52b6e93607484c8f7b6dc4516248274197ffdfe89023c10d2253e",
         "firstId": {
@@ -1084,8 +1084,8 @@
       }
     },
     {
-      "comment": "epoch(46): 200 identities -0 +100 by 180 signers(90.00%)",
-      "epoch": 46,
+      "comment": "height(46): 200 identities -0 +100 by 180 signers(90.00%)",
+      "height": 46,
       "newIdentities": [
         "0x15a4004d13409c0d9eb0e59c62d4537606baadb3",
         "0x52f44208a2a9c6c06bd0998d16f29f94ef178770",
@@ -1605,7 +1605,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 46,
+        "height": 46,
         "population": 300,
         "root": "0x2192ef0953faacc5212d1d222c79c2df598a5507af3f47abb48d630590878db2",
         "firstId": {
@@ -1632,8 +1632,8 @@
       }
     },
     {
-      "comment": "epoch(47): 300 identities -0 +100 by 248 signers(82.67%)",
-      "epoch": 47,
+      "comment": "height(47): 300 identities -0 +100 by 248 signers(82.67%)",
+      "height": 47,
       "newIdentities": [
         "0x041ce85a8a1a7b7185596bc63d8be2ed85e8ce95",
         "0x9c0ba830faf9dcd2f41488f869cb670c39c7fe32",
@@ -2153,7 +2153,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 47,
+        "height": 47,
         "population": 400,
         "root": "0xbc74d0fda00162503ebe06ea54e0f4014e0ec818459ccc3d7ae1972a2ef6ad50",
         "firstId": {
@@ -2180,8 +2180,8 @@
       }
     },
     {
-      "comment": "epoch(48): 400 identities -0 +100 by 388 signers(97.00%)",
-      "epoch": 48,
+      "comment": "height(48): 400 identities -0 +100 by 388 signers(97.00%)",
+      "height": 48,
       "newIdentities": [
         "0x64e18b2e0d03363c1e957e496cd931c0ad006d8a",
         "0x31255e49c9025f315509376ab4130750a0198cf0",
@@ -2701,7 +2701,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 48,
+        "height": 48,
         "population": 500,
         "root": "0x70542e95a01ec0cc7ceaa95f8e6cc5b91fb0ffd09150c52d2be1325319f30145",
         "firstId": {
@@ -2728,8 +2728,8 @@
       }
     },
     {
-      "comment": "epoch(49): 500 identities -0 +100 by 415 signers(83.00%)",
-      "epoch": 49,
+      "comment": "height(49): 500 identities -0 +100 by 415 signers(83.00%)",
+      "height": 49,
       "newIdentities": [
         "0xe1f47d3e0b348e404a9c711b988645a4e004d9d0",
         "0xd8d0cbfa06e3309ea3fd804238d5572ff321c2be",
@@ -3249,7 +3249,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 49,
+        "height": 49,
         "population": 600,
         "root": "0xfcb2843ac49feb3e93874eb327b58a36d4ae9ba6f76374461a7d5f4a829e458c",
         "firstId": {
@@ -3276,8 +3276,8 @@
       }
     },
     {
-      "comment": "epoch(50): 600 identities -0 +100 by 580 signers(96.67%)",
-      "epoch": 50,
+      "comment": "height(50): 600 identities -0 +100 by 580 signers(96.67%)",
+      "height": 50,
       "newIdentities": [
         "0xc75debc934de31548e7a102c8815de5a0d5e4e46",
         "0xe140ee5dd82c8b3c3f03f0c0b94a360337f08427",
@@ -3797,7 +3797,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 50,
+        "height": 50,
         "population": 700,
         "root": "0xde3e3f6bcb5d0f42b1431958d0bd94c9ba4a6ebb2ff66783ef3f4e4c38accab1",
         "firstId": {
@@ -3824,8 +3824,8 @@
       }
     },
     {
-      "comment": "epoch(51): 700 identities -0 +100 by 572 signers(81.71%)",
-      "epoch": 51,
+      "comment": "height(51): 700 identities -0 +100 by 572 signers(81.71%)",
+      "height": 51,
       "newIdentities": [
         "0x8afdcf82cc386d3adba9563ff2daf3747ab61f5e",
         "0xfc9fd4c5c33c9c9c3d9f1f8c44286a609d90a659",
@@ -4345,7 +4345,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 51,
+        "height": 51,
         "population": 800,
         "root": "0x71ca4f769930e38ceeb2af30f3c49cc65cd95c8b989af742b218a73915ab92ba",
         "firstId": {
@@ -4372,8 +4372,8 @@
       }
     },
     {
-      "comment": "epoch(52): 800 identities -0 +100 by 624 signers(78.00%)",
-      "epoch": 52,
+      "comment": "height(52): 800 identities -0 +100 by 624 signers(78.00%)",
+      "height": 52,
       "newIdentities": [
         "0x2c589673e5f60f3616e9dcb7ef773bc64b5b33cb",
         "0xac9dc5466ed612e9d3ea73f2bff4a5119563fd13",
@@ -4893,7 +4893,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 52,
+        "height": 52,
         "population": 900,
         "root": "0x28abda52ac1a1c090266f64b7e9ea09fd4b6cf69cca8139de76cc4cbc17eae87",
         "firstId": {
@@ -4920,8 +4920,8 @@
       }
     },
     {
-      "comment": "epoch(53): 900 identities -0 +100 by 706 signers(78.44%)",
-      "epoch": 53,
+      "comment": "height(53): 900 identities -0 +100 by 706 signers(78.44%)",
+      "height": 53,
       "newIdentities": [
         "0x3133214589fb30499106e3d7f5abbc956724cb73",
         "0xf3ed4fa7090f666503ae5b5917bd06c0b402f9fe",
@@ -5441,7 +5441,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 53,
+        "height": 53,
         "population": 1000,
         "root": "0xaa62886a95e2d73ae42b55893aef20eb435fccb80e6bbfbddad326c80fd5e517",
         "firstId": {
@@ -5468,8 +5468,8 @@
       }
     },
     {
-      "comment": "epoch(54): 1000 identities -0 +100 by 793 signers(79.30%)",
-      "epoch": 54,
+      "comment": "height(54): 1000 identities -0 +100 by 793 signers(79.30%)",
+      "height": 54,
       "newIdentities": [
         "0x0d18f2dcd625e344983a793593a02a0e4f6dc108",
         "0x49a19802697db02f4165323420569b3faab39b63",
@@ -5989,7 +5989,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 54,
+        "height": 54,
         "population": 1100,
         "root": "0xae17e9f10d709f29a0427d8588f0a12e01a17181095d77d91465c80e1a4cd536",
         "firstId": {
@@ -6016,8 +6016,8 @@
       }
     },
     {
-      "comment": "epoch(54): 1100 identities -0 +0 by 809 signers(73.55%)",
-      "epoch": 54,
+      "comment": "height(54): 1100 identities -0 +0 by 809 signers(73.55%)",
+      "height": 54,
       "newIdentities": [],
       "newPubKeys": [],
       "removeFlags": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -6035,7 +6035,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 54,
+        "height": 54,
         "population": 1100,
         "root": "0xda5216f21756a6daf7c630e2462cc22f94a459dd5abc69cb4e21a026c2b5ba8a",
         "firstId": {
@@ -6062,8 +6062,8 @@
       }
     },
     {
-      "comment": "epoch(55): 1100 identities -100 +0 by 854 signers(77.64%)",
-      "epoch": 55,
+      "comment": "height(55): 1100 identities -100 +0 by 854 signers(77.64%)",
+      "height": 55,
       "newIdentities": [],
       "newPubKeys": [],
       "removeFlags": "0x00000006880200008702020200000082000009c09000000000001000000822080004008402c000000010000a2090001c0000052060002044000000000118020200800000000200008080000a00010806100080180800058801a000000004008080002000000000000488d0002000088000000008000010000800000010000982004000000a0000000002",
@@ -6081,7 +6081,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 55,
+        "height": 55,
         "population": 1000,
         "root": "0x59840a18cbfe8a99ff4b03867f70663000b38ca2955793813e55a5452b5233e9",
         "firstId": {
@@ -6108,8 +6108,8 @@
       }
     },
     {
-      "comment": "epoch(56): 1000 identities -0 +100 by 965 signers(96.50%)",
-      "epoch": 56,
+      "comment": "height(56): 1000 identities -0 +100 by 965 signers(96.50%)",
+      "height": 56,
       "newIdentities": [
         "0x7127481b30d773d053aafd84488c3daec03e9381",
         "0x4376bd44c034fe052274f3b6325ffe6d47f4efa9",
@@ -6629,7 +6629,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 56,
+        "height": 56,
         "population": 1100,
         "root": "0x75845d2f2ff70ab6eddb81a39d51452130c1e121e911c5627efc460c2b89e456",
         "firstId": {
@@ -6656,8 +6656,8 @@
       }
     },
     {
-      "comment": "epoch(56): 1100 identities -125 +173 by 903 signers(82.09%)",
-      "epoch": 56,
+      "comment": "height(56): 1100 identities -125 +173 by 903 signers(82.09%)",
+      "height": 56,
       "newIdentities": [
         "0x81c756a858f3707e0c6da3e10039412f49f4019a",
         "0xb23ad9458c9b40267754cc988437350f18c8969b",
@@ -7542,7 +7542,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 56,
+        "height": 56,
         "population": 1148,
         "root": "0xbfd6883d51dbf3cd26850bd25686b70a554014d862bbaa9073bce856270639ff",
         "firstId": {
@@ -7569,8 +7569,8 @@
       }
     },
     {
-      "comment": "epoch(58): 1148 identities -186 +145 by 1101 signers(95.91%)",
-      "epoch": 58,
+      "comment": "height(58): 1148 identities -186 +145 by 1101 signers(95.91%)",
+      "height": 58,
       "newIdentities": [
         "0xdfd85445754eb906da602aa84265717b8b41010a",
         "0xd86838c02340bed9c14e20cc03e7a9d5a87ce640",
@@ -8315,7 +8315,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 58,
+        "height": 58,
         "population": 1107,
         "root": "0x813dd7f519dd1ff08e6ff9e1703224fb4ddbef25eb68dbe324f243ef017a4341",
         "firstId": {
@@ -8342,8 +8342,8 @@
       }
     },
     {
-      "comment": "epoch(62): 1107 identities -210 +180 by 1057 signers(95.48%)",
-      "epoch": 62,
+      "comment": "height(62): 1107 identities -210 +180 by 1057 signers(95.48%)",
+      "height": 62,
       "newIdentities": [
         "0x62ef7d99c8df3eabfd3d09989c2c0e08c3ce9623",
         "0xd1573d6312a3369ca316c09757d941bd9bbd5e8c",
@@ -9263,7 +9263,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 62,
+        "height": 62,
         "population": 1077,
         "root": "0x09e9684865ee71d90695f14800571b9c200c8c185bcef67163a710d9c173607b",
         "firstId": {
@@ -9290,8 +9290,8 @@
       }
     },
     {
-      "comment": "epoch(63): 1077 identities -180 +200 by 727 signers(67.50%)",
-      "epoch": 63,
+      "comment": "height(63): 1077 identities -180 +200 by 727 signers(67.50%)",
+      "height": 63,
       "newIdentities": [
         "0x39f811eb10ae64e03d83b8786778d66bb286a1ff",
         "0x8c1949fdaa5857ef092c0009305feb6e125094e0",
@@ -10311,7 +10311,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 63,
+        "height": 63,
         "population": 1097,
         "root": "0x2597af94b20ec594e5396da58f7e56e1c84387fdf925b0825978d943f27342ae",
         "firstId": {
@@ -10338,8 +10338,8 @@
       }
     },
     {
-      "comment": "epoch(64): 1097 identities -100 +120 by 380 signers(34.64%)",
-      "epoch": 64,
+      "comment": "height(64): 1097 identities -100 +120 by 380 signers(34.64%)",
+      "height": 64,
       "newIdentities": [
         "0x5ce5e4c6c76e0697576fc9f434ab48487e528a05",
         "0xa3fae3a69a30d9bb5b081d0a1abed143b9b7e717",
@@ -10959,7 +10959,7 @@
       ],
       "checks": {
         "valid": false,
-        "epoch": 63,
+        "height": 63,
         "population": 1097,
         "root": "0x2597af94b20ec594e5396da58f7e56e1c84387fdf925b0825978d943f27342ae",
         "firstId": {
@@ -10986,8 +10986,8 @@
       }
     },
     {
-      "comment": "epoch(62): 1097 identities -100 +120 by 1092 signers(99.54%)",
-      "epoch": 62,
+      "comment": "height(62): 1097 identities -100 +120 by 1092 signers(99.54%)",
+      "height": 62,
       "newIdentities": [
         "0x15ec24f28a35d725167ebdddb695545a3017cf6c",
         "0x1cd9c4c5984091b768d6732d0127f875967da753",
@@ -11607,7 +11607,7 @@
       ],
       "checks": {
         "valid": false,
-        "epoch": 63,
+        "height": 63,
         "population": 1097,
         "root": "0x2597af94b20ec594e5396da58f7e56e1c84387fdf925b0825978d943f27342ae",
         "firstId": {
@@ -11634,8 +11634,8 @@
       }
     },
     {
-      "comment": "epoch(64): 1097 identities -80 +110 by 862 signers(78.58%)",
-      "epoch": 64,
+      "comment": "height(64): 1097 identities -80 +110 by 862 signers(78.58%)",
+      "height": 64,
       "newIdentities": [
         "0xaf40524224a4381162b839855f46ff85424fd1e1",
         "0x385373fd4986a108e85634e7cb0187dca3f51abd",
@@ -12205,7 +12205,7 @@
       ],
       "checks": {
         "valid": true,
-        "epoch": 64,
+        "height": 64,
         "population": 1127,
         "root": "0xf9d511e1ff238dc3375f740494c176d4b03ff9a395482a88001c704f9f6bd874",
         "firstId": {

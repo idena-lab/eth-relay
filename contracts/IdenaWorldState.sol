@@ -15,8 +15,8 @@ contract IdenaWorldState is Ownable {
         uint256 pubY;
     }
 
-    uint256 private _epoch;
-    // Identities of latest epoch, the array size only grows, size is controlled by _populcation
+    uint256 private _height;
+    // Identities of latest state, the array size only grows, size is controlled by _populcation
     // Newbie, Verified, Human are identities, while others(Unknown, Killed, Suspended, Candidate) are not
     address[] private _identities;
     uint256 private _population;
@@ -27,17 +27,17 @@ contract IdenaWorldState is Ownable {
 
     bool private _initialized;
 
-    event Updated(uint256 epoch, uint256 population);
+    event Updated(uint256 height, uint256 population);
 
     constructor() public {}
 
     /**
-     * @dev Initialize `epoch` and identities with pubkeys
+     * @dev Initialize `height` and identities with pubkeys
      *
      * Emits an {Updated} event.
      */
     function init(
-        uint256 epoch,
+        uint256 height,
         address[] memory identities,
         uint256[2][] memory pubkeys
     ) public onlyOwner {
@@ -45,7 +45,7 @@ contract IdenaWorldState is Ownable {
         require(identities.length == pubkeys.length, "array length not match for identities and pubkeys.");
 
         _initialized = true;
-        _epoch = epoch;
+        _height = height;
         address addr;
         uint256[2] memory pubkey;
         for (uint256 i = 0; i < identities.length; i++) {
@@ -55,10 +55,10 @@ contract IdenaWorldState is Ownable {
             _states[addr] = IdState(pubkey[0], pubkey[1]);
             _identities.push(addr);
         }
-        _updateRoot(epoch, identities, pubkeys, bytes(""));
+        _updateRoot(height, identities, pubkeys, bytes(""));
 
         _population = _identities.length;
-        emit Updated(_epoch, _population);
+        emit Updated(height, _population);
     }
 
     /**
@@ -75,7 +75,7 @@ contract IdenaWorldState is Ownable {
      * Emits an {Updated} event.
      */
     function update(
-        uint256 epoch,
+        uint256 height,
         address[] memory identities,
         uint256[2][] memory pubkeys,
         bytes memory removeFlags,
@@ -85,21 +85,19 @@ contract IdenaWorldState is Ownable {
         uint256[4] memory apk2
     ) public {
         require(_initialized, "contract has not initialized.");
-        require(_epoch <= epoch, "epoch can not decrease");
+        require(_height < height, "blockchain height must increase");
 
         (uint256 count, Pairing.G1Point memory apk1) = _buildAPK1(signFlags);
         // verify signature
         require(count > _population.mul(2).div(3), "not enough signatures");
-        _updateRoot(epoch, identities, pubkeys, removeFlags);
+        _updateRoot(height, identities, pubkeys, removeFlags);
         _verify(apk1, apk2, abi.encodePacked(_root), signature);
 
         // update _identities, _states, _population
         _updateStates(identities, pubkeys, removeFlags, removeCount);
 
-        if (epoch > _epoch) {
-            _epoch = epoch;
-        }
-        emit Updated(_epoch, _population);
+        _height = height;
+        emit Updated(height, _population);
     }
 
     /**
@@ -137,7 +135,7 @@ contract IdenaWorldState is Ownable {
      * @dev update state root
      */
     function _updateRoot(
-        uint256 epoch,
+        uint256 height,
         address[] memory identities,
         uint256[2][] memory pubkeys,
         bytes memory removeFlags
@@ -147,7 +145,7 @@ contract IdenaWorldState is Ownable {
         for (uint256 i = 0; i < identities.length; i++) {
             hIds = keccak256(abi.encodePacked(hIds, identities[i], pubkeys[i][0], pubkeys[i][1]));
         }
-        _root = uint256(keccak256(abi.encodePacked(_root, epoch, hIds, keccak256(removeFlags))));
+        _root = uint256(keccak256(abi.encodePacked(_root, height, hIds, keccak256(removeFlags))));
     }
 
     /**
@@ -234,7 +232,7 @@ contract IdenaWorldState is Ownable {
             for (uint256 i = oldPop - 1; i >= emptySlots[head]; i--) {
                 if (i != emptySlots[tail]) {
                     _identities[emptySlots[head]] = _identities[i];
-										head++;
+					head++;
                 } else {
                     tail--;
                 }
@@ -280,8 +278,8 @@ contract IdenaWorldState is Ownable {
         return _root;
     }
 
-    function epoch() public view returns (uint256) {
-        return _epoch;
+    function height() public view returns (uint256) {
+        return _height;
     }
 
     function population() public view returns (uint256) {
