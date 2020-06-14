@@ -2,7 +2,7 @@
 
 ## state
 
-![state-tests.jpg](./resources/state-tests.jpg)
+![state-tests.jpg](./state-tests.jpg)
 
 ## pairing
 
