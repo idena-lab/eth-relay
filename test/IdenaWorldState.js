@@ -105,7 +105,7 @@ contract("IdenaWorldState", accounts => {
       let batch = 1;
       for (let i = 0; i < total; i += batchSize, batch++) {
         let size = i + batchSize > total ? total - i : batchSize;
-        it(`Init batch ${batch}: submitting ${i+size}/${total} identities`, async () => {
+        it(`Init batch ${batch}: submitting ${i + size}/${total} identities`, async () => {
           let tx = await this.idenaWorld.submitInitState(
             initData.identities.slice(i, i + size),
             initData.blsPub1s.slice(i, i + size),
@@ -114,10 +114,15 @@ contract("IdenaWorldState", accounts => {
             }
           ).should.be.fulfilled;
           console.debug(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+          // let txInfo = await web3.eth.getTransaction(tx.tx);
+          // console.debug(`Tx data: ${txInfo.input}`);
         });
       }
       it(`Finish init of block ${height} with root ${initData.root}`, async () => {
-        await this.idenaWorld.finishInit(height, initData.root, { from: owner }).should.be.fulfilled;
+        let tx = await this.idenaWorld.finishInit(height, initData.root, { from: owner }).should.be.fulfilled;
+        console.debug(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+        // let txInfo = await web3.eth.getTransaction(tx.tx);
+        // console.debug(`Tx data: ${txInfo.input}`);
         await checkState(initData.checks);
       });
     });
@@ -146,6 +151,8 @@ contract("IdenaWorldState", accounts => {
         if (d.checks.valid) {
           let tx = await p.should.be.fulfilled;
           console.debug(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+          // let txInfo = await web3.eth.getTransaction(tx.tx);
+          // console.debug(`Tx data: ${txInfo.input}`);
         } else {
           let err = await p.should.be.rejectedWith(h.EVMRevert);
           console.log(`Reverted as expected, reason: ${err.reason}`);

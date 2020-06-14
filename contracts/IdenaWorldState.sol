@@ -244,7 +244,7 @@ contract IdenaWorldState is Ownable {
             // adjust the origin list, filling the empty slots
             uint256 head = 0;
             uint256 tail = emptyCount - 1;
-            for (uint256 i = oldPop - 1; i >= emptySlots[head]; i--) {
+            for (uint256 i = oldPop - 1; head <= tail && i >= emptySlots[head]; i--) {
                 if (i != emptySlots[tail]) {
                     _identities[emptySlots[head]] = _identities[i];
                     head++;
