@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Pairing.sol";
 
-
 contract IdenaWorldState is Ownable {
     using SafeMath for uint256;
     using Pairing for *;
@@ -27,25 +26,26 @@ contract IdenaWorldState is Ownable {
 
     bool private _initialized;
 
-    event Updated(uint256 height, uint256 population);
+    event StateChanged(uint256 height, uint256 root, uint256 population);
 
     constructor() public {}
 
     /**
-     * @dev Initialize `height` and identities with pubkeys
+     * @dev Submit initial identities
      *
-     * Emits an {Updated} event.
+     *  Due to the gas imitat, this function may require multiple calls to submit
+     *  all data. During multiple submissions, the order of the identities and pubkeys
+     *  must strictly match the original order in idena.
+     *
+     * `identities` are the identities in idena relay state.
+     * `pubkeys` are the G1 bls pubkeys matching the identities.
+     *
+     * Emits an {StateChanged} event.
      */
-    function init(
-        uint256 height,
-        address[] memory identities,
-        uint256[2][] memory pubkeys
-    ) public onlyOwner {
-        require(!_initialized, "initialization can only be called once.");
+    function submitInitState(address[] memory identities, uint256[2][] memory pubkeys) public onlyOwner {
+        require(!_initialized, "initialization can only be performed once.");
         require(identities.length == pubkeys.length, "array length not match for identities and pubkeys.");
 
-        _initialized = true;
-        _height = height;
         address addr;
         uint256[2] memory pubkey;
         for (uint256 i = 0; i < identities.length; i++) {
@@ -55,10 +55,25 @@ contract IdenaWorldState is Ownable {
             _states[addr] = IdState(pubkey[0], pubkey[1]);
             _identities.push(addr);
         }
-        _updateRoot(height, identities, pubkeys, bytes(""));
 
-        _population = _identities.length;
-        emit Updated(height, _population);
+        _population += identities.length;
+    }
+
+    /**
+     * @dev End the initialization operation
+     *
+     *   After initialization, the contract's state of identities should be consistent
+     *   with the idena blockchain's state at `height`.
+     *
+     * `height` is the specific height of the initial state.
+     * `root` is the relay-state root in idena blockchain.
+     */
+    function finishInit(uint256 height, uint256 root) public onlyOwner {
+        require(!_initialized, "initialization can only be performed once.");
+        _initialized = true;
+        _height = height;
+        _root = root;
+        emit StateChanged(height, root, _population);
     }
 
     /**
@@ -72,7 +87,7 @@ contract IdenaWorldState is Ownable {
      * `signature` is the signature of this update.
      * `apk2` is the aggregated G2 pubkeys.
      *
-     * Emits an {Updated} event.
+     * Emits an {StateChanged} event.
      */
     function update(
         uint256 height,
@@ -97,7 +112,7 @@ contract IdenaWorldState is Ownable {
         _updateStates(identities, pubkeys, removeFlags, removeCount);
 
         _height = height;
-        emit Updated(height, _population);
+        emit StateChanged(height, _root, _population);
     }
 
     /**
@@ -228,11 +243,11 @@ contract IdenaWorldState is Ownable {
         } else if (emptyCount > 0) {
             // adjust the origin list, filling the empty slots
             uint256 head = 0;
-            uint256 tail = emptyCount-1;
+            uint256 tail = emptyCount - 1;
             for (uint256 i = oldPop - 1; i >= emptySlots[head]; i--) {
                 if (i != emptySlots[tail]) {
                     _identities[emptySlots[head]] = _identities[i];
-					head++;
+                    head++;
                 } else {
                     tail--;
                 }

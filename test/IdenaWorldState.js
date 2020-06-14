@@ -48,11 +48,12 @@ contract("IdenaWorldState", accounts => {
         // await mock.verify(d.apk1, d.apk2, d.message, d.signature).should.be.fulfilled
         // gas cost: 600000 - 650000
         let gasCost = await mock.verify.estimateGas(d.apk1, d.apk2, d.message, d.signature).should.be.fulfilled;
-        console.log("Gas cost: " + gasCost);
+        console.debug("Gas cost: " + gasCost);
       });
     }
   });
 
+  // check state results
   const checkState = async checks => {
     (await this.idenaWorld.initialized()).should.equal(true);
     (await this.idenaWorld.height()).should.eq.BN(new BN(checks.height));
@@ -70,37 +71,60 @@ contract("IdenaWorldState", accounts => {
       addr.should.equal(checkIds[i].address);
       (await this.idenaWorld.isIdentity(addr)).should.equal(true);
       const st = await this.idenaWorld.stateOf(addr);
-      // console.log(st);
-      st.pubX.should.eq.BN(new BN(checkIds[i].pubKey[0].substr(2), 16));
-      st.pubY.should.eq.BN(new BN(checkIds[i].pubKey[1].substr(2), 16));
+      // console.debug(st);
+      st.pubX.should.eq.BN(new BN(checkIds[i].blsPub1[0].substr(2), 16));
+      st.pubY.should.eq.BN(new BN(checkIds[i].blsPub1[1].substr(2), 16));
     }
 
     (await this.idenaWorld.root()).should.eq.BN(new BN(checks.root.substr(2), 16));
   };
 
-  describe.only("> initialize", async () => {
+  describe.only("> Initialization --------------------------------------------", async () => {
     const initData = stateData.init;
     const height = new BN(initData.height);
     it("init should failed by non-owner", async () => {
       const nonOwner = accounts[3];
       await this.idenaWorld
-        .init(height, initData.identities, initData.pubKeys, {
+        .submitInitState(initData.identities, initData.blsPub1s.slice(0, 100), {
+          from: nonOwner
+        })
+        .should.be.rejectedWith(h.EVMRevert);
+      await this.idenaWorld
+        .finishInit(height, initData.root, {
           from: nonOwner
         })
         .should.be.rejectedWith(h.EVMRevert);
     });
-    it(stateData.init.comment, async () => {
+
+    // valid init
+    describe(stateData.init.comment, async () => {
       const owner = deployer;
-      let tx = await this.idenaWorld.init(height, initData.identities, initData.pubKeys, {
-        from: owner
-      }).should.be.fulfilled;
-      console.log(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
-      await checkState(initData.checks);
+      // split data to call init
+      const batchSize = 100;
+      const total = initData.identities.length;
+      let batch = 1;
+      for (let i = 0; i < total; i += batchSize, batch++) {
+        let size = i + batchSize > total ? total - i : batchSize;
+        it(`Init batch ${batch}: submitting ${i+size}/${total} identities`, async () => {
+          let tx = await this.idenaWorld.submitInitState(
+            initData.identities.slice(i, i + size),
+            initData.blsPub1s.slice(i, i + size),
+            {
+              from: owner
+            }
+          ).should.be.fulfilled;
+          console.debug(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+        });
+      }
+      it(`Finish init of block ${height} with root ${initData.root}`, async () => {
+        await this.idenaWorld.finishInit(height, initData.root, { from: owner }).should.be.fulfilled;
+        await checkState(initData.checks);
+      });
     });
   });
 
-  describe.only("> update", async () => {
-    const operators = [owner, accounts[1], accounts[2]];
+  describe.only("> Updates --------------------------------------------", async () => {
+    // we can select sender randomly because anyone can call update
     const randSender = () => accounts[_.random(0, accounts.length - 1)];
     const data = stateData.updates;
     for (const [i, d] of data.entries()) {
@@ -109,7 +133,7 @@ contract("IdenaWorldState", accounts => {
         let p = this.idenaWorld.update(
           height,
           d.newIdentities,
-          d.newPubKeys,
+          d.newBlsPub1s,
           d.removeFlags,
           d.removeCount,
           d.signFlags,
@@ -121,10 +145,10 @@ contract("IdenaWorldState", accounts => {
         );
         if (d.checks.valid) {
           let tx = await p.should.be.fulfilled;
-          console.log(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+          console.debug(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
         } else {
           let err = await p.should.be.rejectedWith(h.EVMRevert);
-          console.log(`Reverted as expected, reson: ${err.reason}`);
+          console.log(`Reverted as expected, reason: ${err.reason}`);
         }
         await checkState(d.checks);
       });
