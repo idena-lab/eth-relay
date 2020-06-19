@@ -15,7 +15,7 @@ contract IdenaWorldState is Ownable {
     }
 
     uint256 private _height;
-    // Identities of latest state, the array size only grows, size is controlled by _populcation
+    // Identities of latest state, the array size only grows, size is controlled by _population
     // Newbie, Verified, Human are identities, while others(Unknown, Killed, Suspended, Candidate) are not
     address[] private _identities;
     uint256 private _population;
@@ -33,7 +33,7 @@ contract IdenaWorldState is Ownable {
     /**
      * @dev Submit initial identities
      *
-     *  Due to the gas imitat, this function may require multiple calls to submit
+     *  Due to the gas limitation, this function may require multiple calls to submit
      *  all data. During multiple submissions, the order of the identities and pubkeys
      *  must strictly match the original order in idena.
      *
@@ -63,7 +63,7 @@ contract IdenaWorldState is Ownable {
      * @dev End the initialization operation
      *
      *   After initialization, the contract's state of identities should be consistent
-     *   with the idena blockchain's state at `height`.
+     *   with the idena blockchain state at `height`.
      *
      * `height` is the specific height of the initial state.
      * `root` is the relay-state root in idena blockchain.
