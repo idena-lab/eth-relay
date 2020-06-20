@@ -56,27 +56,32 @@ contract("IdenaWorldState", accounts => {
   // check state results
   const checkState = async checks => {
     (await this.idenaWorld.initialized()).should.equal(true);
-    (await this.idenaWorld.height()).should.eq.BN(new BN(checks.height));
-    (await this.idenaWorld.population()).should.eq.BN(new BN(checks.population));
+    let rsp = await this.idenaWorld.height();
+    // height
+    rsp[0].should.eq.BN(new BN(checks.height));
+    // isUpdating
+    rsp[1].should.equal(false);
+
+    (await this.idenaWorld.population())[0].should.eq.BN(new BN(checks.population));
 
     // first, middle, last
-    let idAddrs = [
-      await this.idenaWorld.identityByIndex(0),
-      await this.idenaWorld.identityByIndex(Math.floor(checks.population / 2)),
-      await this.idenaWorld.identityByIndex(checks.population - 1)
+    let addrList = [
+      (await this.idenaWorld.identityByIndex(0))[0],
+      (await this.idenaWorld.identityByIndex(Math.floor(checks.population / 2)))[0],
+      (await this.idenaWorld.identityByIndex(checks.population - 1))[0]
     ];
     let checkIds = [checks.firstId, checks.middleId, checks.lastId];
     for (let i = 0; i < checkIds.length; i++) {
-      let addr = idAddrs[i].toLowerCase();
+      let addr = addrList[i].toLowerCase();
       addr.should.equal(checkIds[i].address);
-      (await this.idenaWorld.isIdentity(addr)).should.equal(true);
-      const st = await this.idenaWorld.stateOf(addr);
+      (await this.idenaWorld.isIdentity(addr))[0].should.equal(true);
+      const st = (await this.idenaWorld.stateOf(addr))[0];
       // console.debug(st);
       st.pubX.should.eq.BN(new BN(checkIds[i].blsPub1[0].substr(2), 16));
       st.pubY.should.eq.BN(new BN(checkIds[i].blsPub1[1].substr(2), 16));
     }
 
-    (await this.idenaWorld.root()).should.eq.BN(new BN(checks.root.substr(2), 16));
+    (await this.idenaWorld.root())[0].should.eq.BN(new BN(checks.root.substr(2), 16));
   };
 
   describe.only("> Initialization --------------------------------------------", async () => {
@@ -85,44 +90,37 @@ contract("IdenaWorldState", accounts => {
     it("init should failed by non-owner", async () => {
       const nonOwner = accounts[3];
       await this.idenaWorld
-        .submitInitState(initData.identities, initData.blsPub1s.slice(0, 100), {
+        .prepareInit(height, initData.identities, initData.blsPub1s.slice(0, 100), {
           from: nonOwner
         })
         .should.be.rejectedWith(h.EVMRevert);
-      await this.idenaWorld
-        .finishInit(height, initData.root, {
-          from: nonOwner
-        })
-        .should.be.rejectedWith(h.EVMRevert);
+      await this.idenaWorld.finishInit(initData.root, { from: nonOwner }).should.be.rejectedWith(h.EVMRevert);
     });
 
     // valid init
     describe(stateData.init.comment, async () => {
       const owner = deployer;
       // split data to call init
-      const batchSize = 100;
+      const batchSize = 60;
       const total = initData.identities.length;
       let batch = 1;
       for (let i = 0; i < total; i += batchSize, batch++) {
         let size = i + batchSize > total ? total - i : batchSize;
         it(`Init batch ${batch}: submitting ${i + size}/${total} identities`, async () => {
-          let tx = await this.idenaWorld.submitInitState(
+          let tx = await this.idenaWorld.prepareInit(
+            height,
             initData.identities.slice(i, i + size),
             initData.blsPub1s.slice(i, i + size),
             {
               from: owner
             }
           ).should.be.fulfilled;
-          console.debug(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
-          // let txInfo = await web3.eth.getTransaction(tx.tx);
-          // console.debug(`Tx data: ${txInfo.input}`);
+          await h.logTx(tx, "          ☟");
         });
       }
       it(`Finish init of block ${height} with root ${initData.root}`, async () => {
-        let tx = await this.idenaWorld.finishInit(height, initData.root, { from: owner }).should.be.fulfilled;
-        console.debug(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
-        // let txInfo = await web3.eth.getTransaction(tx.tx);
-        // console.debug(`Tx data: ${txInfo.input}`);
+        let tx = await this.idenaWorld.finishInit(initData.root, { from: owner }).should.be.fulfilled;
+        await h.logTx(tx, "          ☟");
         await checkState(initData.checks);
       });
     });
@@ -133,31 +131,86 @@ contract("IdenaWorldState", accounts => {
     const randSender = () => accounts[_.random(0, accounts.length - 1)];
     const data = stateData.updates;
     for (const [i, d] of data.entries()) {
-      it(d.comment, async () => {
-        const height = new BN(d.height);
-        let p = this.idenaWorld.update(
-          height,
-          d.newIdentities,
-          d.newBlsPub1s,
-          d.removeFlags,
-          d.removeCount,
-          d.signFlags,
-          d.signature,
-          d.apk2,
-          {
-            from: randSender()
-          }
-        );
-        if (d.checks.valid) {
-          let tx = await p.should.be.fulfilled;
-          console.debug(`Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
-          // let txInfo = await web3.eth.getTransaction(tx.tx);
-          // console.debug(`Tx data: ${txInfo.input}`);
+      const height = new BN(d.height);
+      const flowId = new BN(1);
+      const addCount = d.newIdentities.length;
+      describe(d.comment, async () => {
+        let pTxCheck;
+        if (d.removeCount <= 40 && addCount <= 2) {
+          it(`Quick update: do this update in one transaction.`, async () => {
+            // little change
+            let pTxCheck = this.idenaWorld.quickUpdate(
+              height,
+              d.newIdentities,
+              d.newBlsPub1s,
+              d.removeFlags,
+              d.signFlags,
+              d.signature,
+              d.apk2,
+              {
+                from: randSender()
+              }
+            );
+            if (d.checks.valid) {
+              let tx = await pTxCheck.should.be.fulfilled;
+              await h.logTx(tx, "          ☟");
+            } else {
+              let err = await pTxCheck.should.be.rejectedWith(h.EVMRevert);
+              console.log(`Reverted as expected, reason: ${err.reason}`);
+            }
+          });
         } else {
-          let err = await p.should.be.rejectedWith(h.EVMRevert);
-          console.log(`Reverted as expected, reason: ${err.reason}`);
+          const batchUpload = 100;
+          const creator = randSender();
+          // at least call prepare once
+          for (let i = 0; i == 0 || i < addCount; i += batchUpload) {
+            let size = i + batchUpload < addCount ? batchUpload : addCount - i;
+            it(`Prepare: add ${size} new identities, sender=${creator}`, async () => {
+              let tx = await this.idenaWorld.prepareUpdate(
+                height,
+                flowId,
+                addCount == 0 ? [] : d.newIdentities.slice(i, i + size),
+                addCount == 0 ? [] : d.newBlsPub1s.slice(i, i + size),
+                {
+                  from: creator
+                }
+              ).should.be.fulfilled;
+              await h.logTx(tx, "          ☟");
+            });
+          }
+          it(`Verify: sender=${creator}`, async () => {
+            pTxCheck = this.idenaWorld.verifyUpdate(height, flowId, d.removeFlags, d.signFlags, d.signature, d.apk2, {
+              from: creator
+            });
+            if (d.checks.valid) {
+              let tx = await pTxCheck.should.be.fulfilled;
+              await h.logTx(tx, "          ☟");
+            } else {
+              let err = await pTxCheck.should.be.rejectedWith(h.EVMRevert);
+              console.log(`Reverted as expected, reason: ${err.reason}`);
+            }
+          });
+          if (d.checks.valid) {
+            const reserveGas = new BN(200000);
+            const gasLimit = new BN(9000000);
+            // at least call submit once
+            const sender = randSender();
+            it(`Submit: sender=${sender}`, async () => {
+              let isUpdating = true;
+              for (let i = 0; isUpdating; i++) {
+                let tx = await this.idenaWorld.submitUpdate(height, flowId, d.removeFlags, reserveGas, {
+                  from: sender,
+                  gas: gasLimit
+                }).should.be.fulfilled;
+                await h.logTx(tx, "          ☟");
+                isUpdating = await this.idenaWorld.isUpdating();
+              }
+            });
+          }
         }
-        await checkState(d.checks);
+        it(`Check update result`, async () => {
+          await checkState(d.checks);
+        });
       });
     }
   });

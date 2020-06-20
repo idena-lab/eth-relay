@@ -9,24 +9,56 @@ contract IdenaWorldState is Ownable {
     using SafeMath for uint256;
     using Pairing for *;
 
+    // todo: add identity state(newbie, verified, human)
     struct IdState {
         uint256 pubX;
         uint256 pubY;
     }
 
+    struct StateKey {
+        uint64 height;
+        // the flow order index of the height, starting from 1
+        uint32 flowId;
+        address identity;
+    }
+
     uint256 private _height;
-    // Identities of latest state, the array size only grows, size is controlled by _population
-    // Newbie, Verified, Human are identities, while others(Unknown, Killed, Suspended, Candidate) are not
-    address[] private _identities;
-    uint256 private _population;
-    // identity keys
-    mapping(address => IdState) private _states;
-    // state hash
+    // state root hash
     uint256 private _root;
+    // Newbie, Verified, Human are identities, while others(Unknown, Killed, Suspended, Candidate) are not
+    StateKey[] private _identities;
+    // identity => key of _allStates
+    mapping(address => StateKey) private _validStates;
+    // not all states in _allStates are valid
+    // key => state, key = height(64bits) + flowId(32bits) + address
+    mapping(uint256 => IdState) private _allStates;
 
     bool private _initialized;
 
-    event StateChanged(uint256 height, uint256 root, uint256 population);
+    // FlowCache holds the data for update flow
+    struct FlowData {
+        bool verified;
+        address creator;
+        address[] newIdentities;
+        bytes32 idHash;
+        uint256 newRoot;
+    }
+    // height => FlowData[]
+    mapping(uint256 => FlowData[]) private _updateFlows;
+    struct Updating {
+        // height is set to non-zero when flow verified and reset to zero after submission
+        uint256 height;
+        uint256 flowId;
+        uint256 addCount;
+        uint256 headPos;
+        uint256 tailPos;
+        bool waitFilling;
+    }
+    Updating private _updating;
+
+    event PrepareUpdate(uint256 indexed height, uint256 flowId);
+    event UpdateVerified(uint256 indexed height, uint256 flowId);
+    event StateChanged(uint256 indexed height, uint256 population, uint256 root);
 
     constructor() public {}
 
@@ -37,89 +69,250 @@ contract IdenaWorldState is Ownable {
      *  all data. During multiple submissions, the order of the identities and pubkeys
      *  must strictly match the original order in idena.
      *
+     * `height` is the specific height of the initial state.
      * `identities` are the identities in idena relay state.
      * `pubkeys` are the G1 bls pubkeys matching the identities.
-     *
-     * Emits an {StateChanged} event.
      */
-    function submitInitState(address[] memory identities, uint256[2][] memory pubkeys) public onlyOwner {
+    function prepareInit(
+        uint256 height,
+        address[] memory identities,
+        uint256[2][] memory pubkeys
+    ) public onlyOwner {
         require(!_initialized, "initialization can only be performed once.");
         require(identities.length == pubkeys.length, "array length not match for identities and pubkeys.");
-
-        address addr;
-        uint256[2] memory pubkey;
-        for (uint256 i = 0; i < identities.length; i++) {
-            addr = identities[i];
-            pubkey = pubkeys[i];
-            require(_states[addr].pubX == 0, "duplicated identity");
-            _states[addr] = IdState(pubkey[0], pubkey[1]);
-            _identities.push(addr);
+        if (_height == 0) {
+            _height = height;
         }
+        require(_height == height, "height not match.");
 
-        _population += identities.length;
+        uint256 flowId = 1;
+        uint256 keyPrefix = (height << 192) + (flowId << 160);
+        uint256[2] memory pk;
+        for (uint256 i = 0; i < identities.length; i++) {
+            address addr = identities[i];
+            uint256 key = keyPrefix + uint256(addr);
+            pk = pubkeys[i];
+            require(_allStates[key].pubX == 0, "duplicated identity");
+            _allStates[key] = IdState(pk[0], pk[1]);
+            StateKey memory sk = StateKey({ height: uint64(height), flowId: uint32(flowId), identity: addr });
+            _identities.push(sk);
+            _validStates[addr] = sk;
+        }
     }
 
     /**
      * @dev End the initialization operation
      *
      *   After initialization, the contract's state of identities should be consistent
-     *   with the idena blockchain state at `height`.
+     *   with the idena blockchain state at `_height`.
      *
-     * `height` is the specific height of the initial state.
      * `root` is the relay-state root in idena blockchain.
      */
-    function finishInit(uint256 height, uint256 root) public onlyOwner {
+    function finishInit(uint256 root) public onlyOwner {
         require(!_initialized, "initialization can only be performed once.");
         _initialized = true;
-        _height = height;
         _root = root;
-        emit StateChanged(height, root, _population);
+        emit StateChanged(_height, _identities.length, root);
     }
 
     /**
-     * @dev Update identities
+     * @dev Update state in one call when there is only little change.
      *
-     * `identities` are the new identities.
-     * `pubkeys` are the new pubkeys to add.
+     * `height` is the idena blockchain height corresponding to this update.
+     * `identities` are the new identities added.
+     * `pubkeys` are the new bls pubkeys of the identities.
      * `removeFlags` are the indexes of identities to remove in previous state world.
-     * `removeCount` is total count of pubkeys to remove in previous state world.
      * `signFlags` are the indexes of singers in previous state world.
      * `signature` is the signature of this update.
      * `apk2` is the aggregated G2 pubkeys.
      *
-     * Emits an {StateChanged} event.
+     * Emits a {StateChanged} event if update successfully.
      */
-    function update(
+    function quickUpdate(
         uint256 height,
         address[] memory identities,
         uint256[2][] memory pubkeys,
         bytes memory removeFlags,
-        uint256 removeCount,
+        bytes memory signFlags,
+        uint256[2] memory signature,
+        uint256[4] memory apk2
+    ) public {
+        uint256 flowId = prepareUpdate(height, 0, identities, pubkeys);
+        verifyUpdate(height, flowId, removeFlags, signFlags, signature, apk2);
+        submitUpdate(height, flowId, removeFlags, 0);
+    }
+
+    /**
+     * @dev Upload identities and save it to flow data first.
+     *
+     * `flowId` is the flow to operate. If it is 0, a new flow will be created.
+     *
+     * Emits a {FlowCreated} event a new update flow is created.
+     */
+    function prepareUpdate(
+        uint256 height,
+        uint256 flowId,
+        address[] memory identities,
+        uint256[2][] memory pubkeys
+    ) public returns (uint256) {
+        require(_initialized, "contract has not initialized.");
+        require(height < (1 << 64), "invalid height");
+        require(flowId < (1 << 32), "invalid flowId");
+        require(identities.length == pubkeys.length, "array length not match");
+        FlowData storage fd;
+        if (flowId == 0 || flowId == _updateFlows[height].length + 1) {
+            fd = _updateFlows[height].push();
+            fd.creator = msg.sender;
+            flowId = _updateFlows[height].length;
+            emit PrepareUpdate(height, flowId);
+        } else {
+            fd = _updateFlows[height][flowId - 1];
+            require(!fd.verified, "can not prepare after verification");
+            require(fd.creator == msg.sender, "only the creator can prepare data to the flow");
+        }
+        bytes32 hIds = fd.idHash;
+        uint256 keyPrefix = (height << 192) + (flowId << 160);
+        uint256[2] memory pk;
+        for (uint256 i = 0; i < identities.length; i++) {
+            address addr = identities[i];
+            pk = pubkeys[i];
+            fd.newIdentities.push(addr);
+            uint256 key = keyPrefix + uint256(addr);
+            require(_allStates[key].pubX == 0, "duplicated identity");
+            _allStates[key] = IdState(pk[0], pk[1]);
+            hIds = keccak256(abi.encodePacked(hIds, addr, pk[0], pk[1]));
+        }
+        fd.idHash = hIds;
+        return flowId;
+    }
+
+    /**
+     * @dev Verify flow data
+     *
+     * Emits a {UpdateVerified} event.
+     */
+    function verifyUpdate(
+        uint256 height,
+        uint256 flowId,
+        bytes memory removeFlags,
         bytes memory signFlags,
         uint256[2] memory signature,
         uint256[4] memory apk2
     ) public {
         require(_initialized, "contract has not initialized.");
+        require(_updating.height == 0, "can not verify during updating");
+        FlowData storage fd = _updateFlows[height][flowId - 1];
+        require(!fd.verified, "this flow has already been verified");
+        require(fd.creator == msg.sender, "only the creator can verify the flow");
+
         require(_height < height, "blockchain height must increase");
+        uint256 oldPop = _identities.length;
+        require(removeFlags.length == (oldPop + 7) / 8, "invalid remove flags");
 
         (uint256 count, Pairing.G1Point memory apk1) = _buildAPK1(signFlags);
         // verify signature
-        require(count > _population.mul(2).div(3), "not enough signatures");
-        _updateRoot(height, identities, pubkeys, removeFlags);
-        _verify(apk1, apk2, abi.encodePacked(_root), signature);
+        require(count > oldPop.mul(2).div(3), "not enough signatures");
+        fd.newRoot = uint256(keccak256(abi.encodePacked(_root, height, fd.idHash, keccak256(removeFlags))));
+        _verify(apk1, apk2, abi.encodePacked(fd.newRoot), signature);
 
-        // update _identities, _states, _population
-        _updateStates(identities, pubkeys, removeFlags, removeCount);
+        fd.verified = true;
+        _updating = Updating({
+            height: height,
+            flowId: flowId,
+            addCount: 0,
+            headPos: 0,
+            tailPos: oldPop - 1,
+            waitFilling: false
+        });
+        emit UpdateVerified(height, flowId);
+    }
 
-        _height = height;
-        emit StateChanged(height, _root, _population);
+    /**
+     * @dev Submit update data to state
+     *
+     * Anyone can call this method, not just the flow creator.
+     *
+     * Emits a {StateChanged} event if update successfully.
+     */
+    function submitUpdate(
+        uint256 height,
+        uint256 flowId,
+        bytes memory removeFlags,
+        uint256 reserveGas
+    ) public {
+        require(_updating.height > 0, "not updating period");
+        require(_updating.height == height && _updating.flowId == flowId, "flow not match");
+        FlowData storage fd = _updateFlows[height][flowId - 1];
+        // this should never happen
+        require(fd.verified, "flow has not been verified");
+
+        Updating memory u = _updating;
+        // uint256 keyPrefix = (height << 192) + (flowId << 160);
+
+        // used to check parameter removeCount
+        uint256 totalAdd = fd.newIdentities.length;
+        while (u.headPos <= u.tailPos && gasleft() > reserveGas) {
+            if (!u.waitFilling) {
+                uint8 flag = (uint8(removeFlags[u.headPos / 8]) & uint8(0x1 << (u.headPos % 8)));
+                if (flag == 0) {
+                    u.headPos++;
+                    continue;
+                }
+                address rmAddr = _identities[u.headPos].identity;
+                u.waitFilling = true;
+                delete _validStates[rmAddr];
+                // todo: delete _allStates[key] or save as gas token
+            }
+            // filling removed slot
+            if (u.addCount < totalAdd) {
+                // insert
+                address addr = fd.newIdentities[u.addCount];
+                StateKey memory stateKey = StateKey({ height: uint64(height), flowId: uint32(flowId), identity: addr });
+                _identities[u.headPos] = stateKey;
+                _validStates[addr] = stateKey;
+                u.addCount++;
+                u.headPos++;
+                u.waitFilling = false;
+            } else {
+                uint8 flag = uint8(removeFlags[u.tailPos / 8]) & uint8(0x1 << (u.tailPos % 8));
+                if (flag == 0) {
+                    // move to fill
+                    _identities[u.headPos] = _identities[u.tailPos];
+                    u.headPos++;
+                    u.waitFilling = false;
+                }
+                u.tailPos--;
+                _identities.pop();
+            }
+        }
+        if (u.headPos > u.tailPos) {
+            // try append remaining new identities to end
+            while (u.addCount < totalAdd && gasleft() > reserveGas) {
+                address addr = fd.newIdentities[u.addCount];
+                StateKey memory stateKey = StateKey({ height: uint64(height), flowId: uint32(flowId), identity: addr });
+                _identities.push(stateKey);
+                _validStates[addr] = stateKey;
+                u.addCount++;
+            }
+        }
+
+        if (u.headPos > u.tailPos && u.addCount >= totalAdd) {
+            // submit finished
+            _height = height;
+            u.height = 0;
+            _updating.height = 0;
+            _root = fd.newRoot;
+            emit StateChanged(height, _identities.length, _root);
+        } else {
+            _updating = u;
+        }
     }
 
     /**
      * @dev aggregate public keys in G1
      */
     function _buildAPK1(bytes memory signFlags) internal view returns (uint256, Pairing.G1Point memory) {
-        uint256 oldPop = _population;
+        uint256 oldPop = _identities.length;
         require(signFlags.length == (oldPop + 7) / 8, "invalid sign flags");
         bool success;
         uint256 count;
@@ -128,7 +321,8 @@ contract IdenaWorldState is Ownable {
             if (uint8(signFlags[i / 8]) & uint8(1 << (i % 8)) != 0) {
                 count++;
                 // aggregate pubkeys
-                IdState storage state = _states[_identities[i]];
+                uint256 key = buildStateKey(_identities[i]);
+                IdState storage state = _allStates[key];
                 if (apk[0] == 0) {
                     apk[0] = state.pubX;
                     apk[1] = state.pubY;
@@ -144,23 +338,6 @@ contract IdenaWorldState is Ownable {
             }
         }
         return (count, Pairing.G1Point(apk[0], apk[1]));
-    }
-
-    /**
-     * @dev update state root
-     */
-    function _updateRoot(
-        uint256 height,
-        address[] memory identities,
-        uint256[2][] memory pubkeys,
-        bytes memory removeFlags
-    ) internal {
-        require(identities.length == pubkeys.length, "array length not match");
-        bytes32 hIds;
-        for (uint256 i = 0; i < identities.length; i++) {
-            hIds = keccak256(abi.encodePacked(hIds, identities[i], pubkeys[i][0], pubkeys[i][1]));
-        }
-        _root = uint256(keccak256(abi.encodePacked(_root, height, hIds, keccak256(removeFlags))));
     }
 
     /**
@@ -191,133 +368,62 @@ contract IdenaWorldState is Ownable {
         require(Pairing.check(p1, p2), "validate signature failed");
     }
 
-    /**
-     * @dev Update the world state of idena.
-     */
-    function _updateStates(
-        address[] memory identities,
-        uint256[2][] memory pubkeys,
-        bytes memory removeFlags,
-        uint256 removeCount
-    ) internal {
-        require(identities.length == pubkeys.length, "array length not match");
-        uint256 oldPop = _population;
-        require(removeFlags.length == (oldPop + 7) / 8, "invalid remove flags");
-        uint256 newPop = oldPop.sub(removeCount).add(identities.length);
-
-        uint256[] memory emptySlots;
-        uint256 emptyCount = 0;
-        if (newPop < oldPop) {
-            //todo: this may exceed the stack size when removed too many ids
-            emptySlots = new uint256[](oldPop - newPop);
-        }
-
-        uint8 rf;
-        uint256 insertCount = 0;
-        // used to check parameter removeCount
-        uint256 realRemoved = 0;
-        address addr;
-        for (uint256 i = 0; i < oldPop; ) {
-            rf = uint8(removeFlags[i / 8]);
-            for (uint256 j = i + 8; i < j; i++) {
-                if ((rf & 0x1 == 0x1)) {
-                    realRemoved++;
-                    // clear removed identity's state
-                    delete _states[_identities[i]];
-                    // insert or move (later)
-                    if (insertCount < identities.length) {
-                        _identities[i] = identities[insertCount];
-                        insertCount++;
-                    } else {
-                        emptySlots[emptyCount] = i;
-                        emptyCount++;
-                    }
-                }
-                rf >>= 1;
-            }
-        }
-        require(realRemoved == removeCount, "wrong remove count supplied");
-
-        if (insertCount < identities.length) {
-            _appendIds(identities, insertCount, oldPop);
-        } else if (emptyCount > 0) {
-            // adjust the origin list, filling the empty slots
-            uint256 head = 0;
-            uint256 tail = emptyCount - 1;
-            for (uint256 i = oldPop - 1; head <= tail && i >= emptySlots[head]; i--) {
-                if (i != emptySlots[tail]) {
-                    _identities[emptySlots[head]] = _identities[i];
-                    head++;
-                } else {
-                    tail--;
-                }
-            }
-        }
-        // update population
-        _population = newPop;
-
-        // set public keys for new identities (must after all deletion)
-        uint256[2] memory pubkey;
-        for (uint256 i = 0; i < identities.length; i++) {
-            addr = identities[i];
-            require(_states[addr].pubX == 0, "duplicated identity");
-            pubkey = pubkeys[i];
-            _states[addr] = IdState(pubkey[0], pubkey[1]);
-        }
-    }
-
-    function _appendIds(
-        address[] memory identities,
-        uint256 fromPos,
-        uint256 oldPop
-    ) internal {
-        uint256 toPos = identities.length;
-        uint256 storeLen = _identities.length;
-        if (oldPop.add(toPos).sub(fromPos) > storeLen) {
-            toPos = storeLen.add(fromPos).sub(_population);
-        }
-        for (uint256 i = oldPop; fromPos < toPos; fromPos++) {
-            _identities[i] = identities[fromPos];
-            i++;
-        }
-        for (; fromPos < identities.length; fromPos++) {
-            _identities.push(identities[fromPos]);
-        }
-    }
-
     function initialized() public view returns (bool) {
         return _initialized;
     }
 
-    function root() public view returns (uint256) {
-        return _root;
+    function isUpdating() public view returns (bool) {
+        return _updating.height > 0;
     }
 
-    function height() public view returns (uint256) {
-        return _height;
+    function updatingInfo() public view returns (Updating memory) {
+        return _updating;
     }
 
-    function population() public view returns (uint256) {
-        return _population;
+    function getFlowData(uint256 height, uint256 flowId) public view returns (FlowData memory) {
+        return _updateFlows[height][flowId - 1];
     }
 
-    function identities() public view returns (address[] memory) {
-        address[] memory result = new address[](_population);
-        for (uint256 i = 0; i < _population; i++) {
-            result[i] = _identities[i];
+    function root() public view returns (uint256, bool) {
+        return (_root, isUpdating());
+    }
+
+    function height() public view returns (uint256, bool) {
+        return (_height, isUpdating());
+    }
+
+    function population() public view returns (uint256, bool) {
+        return (_identities.length, isUpdating());
+    }
+
+    function identities(bool canUpdating) public view returns (address[] memory, bool) {
+        bool updating = isUpdating();
+        if (updating && !canUpdating) {
+            return (new address[](0), updating);
         }
-        return result;
+        uint256 pop = _identities.length;
+        address[] memory result = new address[](pop);
+        for (uint256 i = 0; i < pop; i++) {
+            result[i] = _identities[i].identity;
+        }
+        return (result, updating);
     }
 
-    function identityByIndex(uint256 i) public view returns (address) {
-        return _identities[i];
+    function identityByIndex(uint256 i) public view returns (address, bool) {
+        return (_identities[i].identity, isUpdating());
     }
 
-    function stateOf(address addr) public view returns (IdState memory) {
-        return _states[addr];
+    function stateOf(address addr) public view returns (IdState memory, bool) {
+        uint256 key = buildStateKey(_validStates[addr]);
+        return (_allStates[key], isUpdating());
     }
 
-    function isIdentity(address addr) public view returns (bool) {
-        return _states[addr].pubX != 0;
+    function isIdentity(address addr) public view returns (bool, bool) {
+        uint256 key = buildStateKey(_validStates[addr]);
+        return (_allStates[key].pubX != 0, isUpdating());
+    }
+
+    function buildStateKey(StateKey memory sk) public pure returns (uint256) {
+        return (uint256(sk.height) << 192) + (uint256(sk.flowId) << 160) + uint256(sk.identity);
     }
 }

@@ -21,5 +21,11 @@ module.exports = {
       ret += HexChars[_.random(0, HexChars.length - 1)];
     }
     return ret;
+  },
+  logTx: async (tx, prefix) => {
+    console.info(`${prefix} Gas cost: ${tx.receipt.cumulativeGasUsed}, tx: ${tx.tx}`);
+    // let txInfo = await web3.eth.getTransaction(tx.tx);
+    // console.log(txInfo);
+    // console.debug(`Tx data: ${txInfo.input}`);
   }
 };
