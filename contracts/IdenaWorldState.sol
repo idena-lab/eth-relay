@@ -9,7 +9,6 @@ contract IdenaWorldState is Ownable {
     using SafeMath for uint256;
     using Pairing for *;
 
-    // todo: add identity state(newbie, verified, human)
     struct IdState {
         uint256 pubX;
         uint256 pubY;
@@ -145,9 +144,19 @@ contract IdenaWorldState is Ownable {
     /**
      * @dev Upload identities and save it to flow data first.
      *
-     * `flowId` is the flow to operate. If it is 0, a new flow will be created.
+     *  `prepareUpdate` must be called at least once regardless of whether there are new identities for a flow-way update.
+     *  Anyone can create his own update flow for specific height by calling `prepareUpdate`.
+     *  It can be called multiple times for one update flow by creator only.
+     *  The data(identities, pubkeys) provided must in the original order during multiple calls.
+     *
+     * `height` is the idena blockchain height corresponding to this update.
+     * `flowId` is the flow to operate. If it is 0 or flowLength+1, a new flow will be created.
+     * `identities` are the new identities added.
+     * `pubkeys` are the new bls pubkeys of the identities.
      *
      * Emits a {FlowCreated} event a new update flow is created.
+     *
+     * @return the flow id of this operation.
      */
     function prepareUpdate(
         uint256 height,
@@ -187,7 +196,17 @@ contract IdenaWorldState is Ownable {
     }
 
     /**
-     * @dev Verify flow data
+     * @dev Verify flow data for one update.
+     *
+     *  After preparing, verification is required to check the update flow is valid or not.
+     *  Only the flow creator can call this function to make his update flow verified.
+     *
+     * `height` is the idena blockchain height corresponding to this update.
+     * `flowId` is the flow to operate.
+     * `removeFlags` are the indexes of identities to remove in previous state world.
+     * `signFlags` are the indexes of singers in previous state world.
+     * `signature` is the signature of this update.
+     * `apk2` is the aggregated G2 pubkeys.
      *
      * Emits a {UpdateVerified} event.
      */
@@ -230,7 +249,13 @@ contract IdenaWorldState is Ownable {
     /**
      * @dev Submit update data to state
      *
-     * Anyone can call this method, not just the flow creator.
+     * Anyone can call this function to submit the update flow after verification, not just the flow creator.
+     *
+     * `height` is the idena blockchain height corresponding to this update.
+     * `flowId` is the flow to operate.
+     * `removeFlags` are the indexes of identities to remove in previous state world.
+     * `reserveGas` is the amount of gas reserved to prevent the transaction beging reverted with out-of-gas.
+     *    When gas is close to the reserved value, it will stop continuing to submit and save the state.
      *
      * Emits a {StateChanged} event if update successfully.
      */
@@ -310,6 +335,10 @@ contract IdenaWorldState is Ownable {
 
     /**
      * @dev aggregate public keys in G1
+     * 
+     * `signFlags` are the indexes of singers in previous state world.
+     * 
+     * @return number of signers and the aggregated public keys
      */
     function _buildAPK1(bytes memory signFlags) internal view returns (uint256, Pairing.G1Point memory) {
         uint256 oldPop = _identities.length;
