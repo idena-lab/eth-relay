@@ -20,7 +20,7 @@
   "author": "henryfour",
   "license": "MIT",
   "dependencies": {
-    "@openzeppelin/contracts": "^3.0.1"
+    "@openzeppelin/contracts": "^4.4.2"
   },
   "devDependencies": {
     "bn-chai": "^1.0.1",
